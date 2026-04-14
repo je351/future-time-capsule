@@ -242,36 +242,48 @@ function CapsuleModal({
         scale: 2,
       });
 
-      // PNG Blob 생성
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        
-        const file = new File([blob], 'future-time-capsule.png', { type: 'image/png' });
-        
-        // 파일 공유 지원 여부 확인
-        if (navigator.canShare?.({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              text: '미래의 나에게 편지를 보냈어요 ✉',
-            });
-          } catch (e) {
-            // 취소됨
-          }
-        } else {
-          // Fallback: 다운로드
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'future-time-capsule.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }
+      // PNG Blob 생성 (Promise 기반)
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/png');
       });
+
+      if (!blob) {
+        console.error('Blob 생성 실패');
+        alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
+        return;
+      }
+
+      const file = new File([blob], 'future-time-capsule.png', { type: 'image/png' });
+      
+      // 파일 공유 지원 여부 확인
+      const canShare = navigator.canShare && navigator.canShare({ files: [file] });
+      
+      if (canShare) {
+        try {
+          await navigator.share({
+            files: [file],
+            text: '미래의 나에게 편지를 보냈어요 ✉',
+          });
+        } catch (e: unknown) {
+          const err = e as { name?: string };
+          if (err?.name !== 'AbortError') {
+            console.error('공유 실패:', e);
+          }
+        }
+      } else {
+        // Fallback: 다운로드
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'future-time-capsule.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
     } catch (error) {
       console.error('공유 실패:', error);
+      alert('공유 중 오류가 발생했어요. 콘솔을 확인해주세요.');
     }
   };
 
