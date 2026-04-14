@@ -228,15 +228,21 @@ function CapsuleModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-white/70 overflow-hidden"
+        className="relative w-full max-w-sm bg-white/90 backdrop-blur-2xl border border-white/30 rounded-[2.5rem] shadow-2xl overflow-hidden"
       >
-        <div className="p-8 text-center space-y-4">
+        <div className="p-8 md:p-12 text-center space-y-4">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 p-2 text-slate-500 hover:text-slate-800 hover:bg-white/20 rounded-full transition-all"
+          >
+            <X size={20} />
+          </button>
           {capsuleData && (
             <img
               src={capsuleData.image}
@@ -247,10 +253,10 @@ function CapsuleModal({
           <p className="text-xs text-slate-400 uppercase tracking-[0.2em]">
             {capsuleData?.text}
           </p>
-          <h2 className="text-2xl font-extrabold text-slate-900">
+          <h2 className="text-2xl font-extrabold text-slate-800">
             편지가 캡슐에 담겼어요.
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-600">
             {month}월 {day}일에 도착합니다.
           </p>
           <button
