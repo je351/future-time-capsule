@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
+import html2canvas from 'html2canvas';
 import { supabase } from './supabase';
 import Bootpay from '@bootpay/client-js';
 
@@ -217,17 +218,60 @@ function CapsuleModal({
   scheduledAt: Date;
   onClose: () => void;
 }) {
+  const modalRef = useRef<HTMLDivElement>(null);
   const capsuleData = CAPSULE_MAPPING[selectedColor as keyof typeof CAPSULE_MAPPING];
   const month = scheduledAt.getMonth() + 1;
   const day = scheduledAt.getDate();
 
   const handleShare = async () => {
-    const text = `미래의 나에게 편지를 보냈어요 ✉\n${month}월 ${day}일에 도착할 거예요.\n\nFuture Time Capsule — future-time-capsule.vercel.app`;
-    if (navigator.share) {
-      try { await navigator.share({ text }); } catch { /* 취소 */ }
-    } else {
-      await navigator.clipboard.writeText(text);
-      alert('복사됐어요!');
+    if (!modalRef.current) return;
+    
+    // 애니메이션 일시정지
+    const animatedElements = modalRef.current.querySelectorAll('[class*="animate"]');
+    animatedElements.forEach((el) => {
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.animation = 'none';
+      htmlEl.style.opacity = '1';
+    });
+
+    try {
+      // html2canvas로 모달 캡처
+      const canvas = await html2canvas(modalRef.current, {
+        useCORS: true,
+        backgroundColor: null,
+        scale: 2,
+      });
+
+      // PNG Blob 생성
+      canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        
+        const file = new File([blob], 'future-time-capsule.png', { type: 'image/png' });
+        
+        // 파일 공유 지원 여부 확인
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              text: '미래의 나에게 편지를 보냈어요 ✉',
+            });
+          } catch (e) {
+            // 취소됨
+          }
+        } else {
+          // Fallback: 다운로드
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'future-time-capsule.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      });
+    } catch (error) {
+      console.error('공유 실패:', error);
     }
   };
 
@@ -241,6 +285,7 @@ function CapsuleModal({
         className="absolute inset-0 bg-black/20 backdrop-blur-md"
       />
       <motion.div
+        ref={modalRef}
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.85, y: 30 }}
