@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
-import html2canvas from 'html2canvas';
+
 import { supabase } from './supabase';
 import Bootpay from '@bootpay/client-js';
 
@@ -218,73 +218,17 @@ function CapsuleModal({
   scheduledAt: Date;
   onClose: () => void;
 }) {
-  const modalRef = useRef<HTMLDivElement>(null);
   const capsuleData = CAPSULE_MAPPING[selectedColor as keyof typeof CAPSULE_MAPPING];
   const month = scheduledAt.getMonth() + 1;
   const day = scheduledAt.getDate();
 
   const handleShare = async () => {
-    if (!modalRef.current) {
-      alert('모달을 찾을 수 없어요.');
-      return;
-    }
-    
-    try {
-      // 애니메이션 일시정지
-      const animatedElements = modalRef.current.querySelectorAll('[class*="animate"]');
-      animatedElements.forEach((el) => {
-        const htmlEl = el as HTMLElement;
-        htmlEl.style.animation = 'none';
-        htmlEl.style.opacity = '1';
-      });
-
-      // html2canvas로 모달 캡처
-      const canvas = await html2canvas(modalRef.current, {
-        useCORS: true,
-        backgroundColor: null,
-        scale: 2,
-      });
-
-      // PNG Blob 생성 (Promise 기반)
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, 'image/png');
-      });
-
-      if (!blob) {
-        alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
-        return;
-      }
-
-      try {
-        const file = new File([blob], 'future-time-capsule.png', { type: 'image/png' });
-        
-        // 파일 공유 지원 여부 확인
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            text: '미래의 나에게 편지를 보냈어요 ✉',
-          });
-        } else {
-          // Fallback: 다운로드
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'future-time-capsule.png';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }
-      } catch (shareError: unknown) {
-        const err = shareError as { name?: string };
-        if (err?.name !== 'AbortError') {
-          console.error('공유/다운로드 실패:', shareError);
-          alert('공유에 실패했어요. 다시 시도해주세요.');
-        }
-      }
-    } catch (error) {
-      console.error('캡처 또는 공유 실패:', error);
-      alert('공유 중 오류가 발생했어요. 콘솔을 확인해주세요.');
+    const text = `미래의 나에게 편지를 보냈어요 ✉️\n${month}월 ${day}일에 도착합니다.\n어떤 색 캡슐이 나왔는지 확인해보세요 🫧\n소중한 분과 함께 캡슐을 열어봐요!\n\nFuture Time Capsule\nfuture-time-capsule.vercel.app`;
+    if (navigator.share) {
+      try { await navigator.share({ text }); } catch { /* 취소 */ }
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert('복사됐어요!');
     }
   };
 
@@ -298,7 +242,6 @@ function CapsuleModal({
         className="absolute inset-0 bg-black/20 backdrop-blur-md"
       />
       <motion.div
-        ref={modalRef}
         initial={{ opacity: 0, scale: 0.85, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.85, y: 30 }}
