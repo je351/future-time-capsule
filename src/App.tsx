@@ -223,11 +223,12 @@ function CapsuleModal({
   const day = scheduledAt.getDate();
 
   const handleShare = async () => {
-    const text = `미래의 나에게 편지를 보냈어요 ✉️\n${month}월 ${day}일에 도착합니다.\n어떤 색 캡슐이 나왔는지 확인해보세요 🫧\n소중한 분과 함께 캡슐을 열어봐요!\n\nFuture Time Capsule\nfuture-time-capsule.vercel.app`;
+    const text = `미래의 나에게 편지를 보냈어요 ✉️\n${month}월 ${day}일에 도착합니다.\n어떤 색 캡슐이 나왔는지 확인해보세요 🫧\n소중한 분과 함께 캡슐을 열어봐요!`;
+    const url = 'https://future-time-capsule.vercel.app';
     if (navigator.share) {
-      try { await navigator.share({ text }); } catch { /* 취소 */ }
+      try { await navigator.share({ title: 'Future Time Capsule', text, url }); } catch { /* 취소 */ }
     } else {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(`${text}\n\n${url}`);
       alert('복사됐어요!');
     }
   };
