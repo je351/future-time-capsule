@@ -220,19 +220,14 @@ function CapsuleModal({
   const capsuleData = CAPSULE_MAPPING[selectedColor as keyof typeof CAPSULE_MAPPING];
   const month = scheduledAt.getMonth() + 1;
   const day = scheduledAt.getDate();
-  const year = scheduledAt.getFullYear();
 
   const handleShare = async () => {
-    const text = `미래의 나에게 편지를 보냈어요 ✉\n${year}년 ${month}월 ${day}일에 도착할 거예요.\n\nFuture Time Capsule — futuretimecapsule.com`;
+    const text = `미래의 나에게 편지를 보냈어요 ✉\n${month}월 ${day}일에 도착할 거예요.\n\nFuture Time Capsule — future-time-capsule.vercel.app`;
     if (navigator.share) {
-      try {
-        await navigator.share({ text });
-      } catch {
-        // 사용자가 취소한 경우 무시
-      }
+      try { await navigator.share({ text }); } catch { /* 취소 */ }
     } else {
       await navigator.clipboard.writeText(text);
-      alert('링크가 복사됐어요!');
+      alert('복사됐어요!');
     }
   };
 
@@ -243,92 +238,87 @@ function CapsuleModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/20 backdrop-blur-md"
       />
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        initial={{ opacity: 0, scale: 0.85, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="relative w-full max-w-sm bg-white/90 backdrop-blur-2xl border border-white/30 rounded-[2.5rem] shadow-2xl overflow-hidden"
+        exit={{ opacity: 0, scale: 0.85, y: 30 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+        className="relative w-full max-w-xs overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, #fdf6ff 0%, #f0f4ff 50%, #fef9f0 100%)',
+          borderRadius: '2.5rem',
+          boxShadow: '0 8px 40px rgba(180,150,220,0.25)',
+          border: '1px solid rgba(255,255,255,0.8)',
+        }}
       >
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 text-slate-500 hover:text-slate-800 hover:bg-white/20 rounded-full transition-all z-10"
+          className="absolute top-5 right-5 p-1.5 rounded-full transition-all z-10"
+          style={{ color: '#C0B0D8', background: 'rgba(200,180,230,0.15)' }}
         >
-          <X size={20} />
+          <X size={16} />
         </button>
 
-        {/* 상단 색상 배경 영역 */}
-        <div
-          className="pt-12 pb-8 px-8 flex flex-col items-center gap-4"
-          style={{ background: `linear-gradient(160deg, ${selectedColor}60 0%, ${selectedColor}20 100%)` }}
-        >
-          {capsuleData ? (
-            <motion.img
-              src={capsuleData.image}
-              alt={capsuleData.text}
-              className="w-28 h-28 object-contain drop-shadow-xl"
-              initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
-              animate={{ scale: 1, opacity: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
-              onError={(e) => {
-                // 이미지 로드 실패 시 색상 원으로 대체
-                const target = e.currentTarget as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'flex';
-              }}
-            />
-          ) : null}
-          {/* 이미지 로드 실패 fallback */}
-          <div
-            className="w-28 h-28 rounded-full border-4 border-white/60 shadow-xl hidden items-center justify-center"
-            style={{ background: selectedColor, display: 'none' }}
-          />
-          <p className="text-xs font-bold tracking-[0.25em] uppercase" style={{ color: `color-mix(in srgb, ${selectedColor} 50%, #6b7280)` }}>
+        {/* 구슬 영역 */}
+        <div className="flex flex-col items-center pt-12 pb-6 px-8">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+            className="mb-4"
+          >
+            {capsuleData ? (
+              <img
+                src={capsuleData.image}
+                alt={capsuleData.text}
+                style={{ width: 120, height: 120, objectFit: 'contain', filter: 'drop-shadow(0 8px 20px rgba(200,160,240,0.4))' }}
+              />
+            ) : (
+              <div style={{ width: 120, height: 120, borderRadius: '50%', background: selectedColor, opacity: 0.7 }} />
+            )}
+          </motion.div>
+
+          {/* 텍스트 */}
+          <p style={{ fontSize: 11, letterSpacing: '0.2em', color: '#C0A8E0', marginBottom: 12, fontStyle: 'italic' }}>
             {capsuleData?.text ?? ''}
+          </p>
+          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 400, color: '#4A3F6B', marginBottom: 8, textAlign: 'center', lineHeight: 1.4 }}>
+            편지가 캡슐에 담겼어요
+          </h2>
+          <p style={{ fontSize: 14, color: '#8A7AAA', textAlign: 'center', lineHeight: 1.6 }}>
+            <span style={{ fontWeight: 600, color: '#6A5A9A' }}>{month}월 {day}일</span>에<br />편지가 도착합니다.
           </p>
         </div>
 
-        {/* 하단 내용 영역 */}
-        <div className="px-8 pb-8 pt-6 space-y-5 text-center">
-          <div className="space-y-2">
-            <h2 style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.75rem', color: '#CFBCF5', fontWeight: 700, lineHeight: 1.2 }}>
-              편지가 캡슐에 담겼어요
-            </h2>
-            <p className="text-slate-500 text-sm leading-relaxed">
-              과거의 내가 보낸 편지가<br />
-              <span className="font-bold text-slate-700">{year}년 {month}월 {day}일</span>에 이메일로 도착해요.
-            </p>
-          </div>
-
-          <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
-            <p className="text-xs text-violet-500 mb-1">예상 도착일</p>
-            <p className="text-base font-extrabold text-violet-700">
-              {year}. {String(month).padStart(2, '0')}. {String(day).padStart(2, '0')}
-            </p>
-            <p className="text-xs text-violet-400 mt-1">오전 9시 (KST) 도착 예정</p>
-          </div>
-
-          <p className="text-xs text-slate-400 leading-snug">
-            스팸함도 꼭 확인해주세요 📬
-          </p>
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleShare}
-              className="flex-1 py-3 rounded-2xl border border-violet-200 bg-violet-50 text-violet-600 font-semibold text-sm hover:bg-violet-100 transition-all flex items-center justify-center gap-1.5"
-            >
-              <span>공유하기</span>
-              <span>↗</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold text-sm shadow-lg shadow-violet-500/20 hover:from-violet-600 hover:to-purple-600 transition-all"
-            >
-              확인
-            </button>
-          </div>
+        {/* 버튼 영역 */}
+        <div style={{ padding: '0 24px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button
+            onClick={onClose}
+            style={{
+              width: '100%', padding: '12px', borderRadius: 99, border: 'none',
+              cursor: 'pointer', fontSize: 14, fontWeight: 500,
+              background: 'linear-gradient(to right, #ffd6e0, #e8d5f5, #fff5cc)',
+              color: '#8A7AAA', fontFamily: 'Georgia, serif',
+              transition: 'all .3s',
+              boxShadow: '0 2px 12px rgba(200,160,220,0.2)',
+            }}
+          >
+            확인
+          </button>
+          <button
+            onClick={handleShare}
+            style={{
+              width: '100%', padding: '10px', borderRadius: 99,
+              border: '1px solid rgba(180,150,220,0.25)',
+              background: 'transparent', color: '#B0A0CC',
+              fontSize: 13, fontFamily: 'Georgia, serif', fontStyle: 'italic',
+              cursor: 'pointer', transition: 'all .2s',
+            }}
+          >
+            공유하기 ↗
+          </button>
         </div>
       </motion.div>
     </div>
