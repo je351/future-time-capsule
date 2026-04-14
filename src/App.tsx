@@ -224,17 +224,20 @@ function CapsuleModal({
   const day = scheduledAt.getDate();
 
   const handleShare = async () => {
-    if (!modalRef.current) return;
+    if (!modalRef.current) {
+      alert('모달을 찾을 수 없어요.');
+      return;
+    }
     
-    // 애니메이션 일시정지
-    const animatedElements = modalRef.current.querySelectorAll('[class*="animate"]');
-    animatedElements.forEach((el) => {
-      const htmlEl = el as HTMLElement;
-      htmlEl.style.animation = 'none';
-      htmlEl.style.opacity = '1';
-    });
-
     try {
+      // 애니메이션 일시정지
+      const animatedElements = modalRef.current.querySelectorAll('[class*="animate"]');
+      animatedElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.animation = 'none';
+        htmlEl.style.opacity = '1';
+      });
+
       // html2canvas로 모달 캡처
       const canvas = await html2canvas(modalRef.current, {
         useCORS: true,
@@ -248,41 +251,39 @@ function CapsuleModal({
       });
 
       if (!blob) {
-        console.error('Blob 생성 실패');
         alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
         return;
       }
 
-      const file = new File([blob], 'future-time-capsule.png', { type: 'image/png' });
-      
-      // 파일 공유 지원 여부 확인
-      const canShare = navigator.canShare && navigator.canShare({ files: [file] });
-      
-      if (canShare) {
-        try {
+      try {
+        const file = new File([blob], 'future-time-capsule.png', { type: 'image/png' });
+        
+        // 파일 공유 지원 여부 확인
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
             text: '미래의 나에게 편지를 보냈어요 ✉',
           });
-        } catch (e: unknown) {
-          const err = e as { name?: string };
-          if (err?.name !== 'AbortError') {
-            console.error('공유 실패:', e);
-          }
+        } else {
+          // Fallback: 다운로드
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'future-time-capsule.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
         }
-      } else {
-        // Fallback: 다운로드
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'future-time-capsule.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+      } catch (shareError: unknown) {
+        const err = shareError as { name?: string };
+        if (err?.name !== 'AbortError') {
+          console.error('공유/다운로드 실패:', shareError);
+          alert('공유에 실패했어요. 다시 시도해주세요.');
+        }
       }
     } catch (error) {
-      console.error('공유 실패:', error);
+      console.error('캡처 또는 공유 실패:', error);
       alert('공유 중 오류가 발생했어요. 콘솔을 확인해주세요.');
     }
   };
