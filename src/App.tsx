@@ -217,12 +217,27 @@ function CapsuleModal({
   scheduledAt: Date;
   onClose: () => void;
 }) {
-  const capsuleData = CAPSULE_MAPPING[selectedColor];
-  const month = String(scheduledAt.getMonth() + 1).padStart(2, '0');
-  const day = String(scheduledAt.getDate()).padStart(2, '0');
+  const capsuleData = CAPSULE_MAPPING[selectedColor as keyof typeof CAPSULE_MAPPING];
+  const month = scheduledAt.getMonth() + 1;
+  const day = scheduledAt.getDate();
+  const year = scheduledAt.getFullYear();
+
+  const handleShare = async () => {
+    const text = `미래의 나에게 편지를 보냈어요 ✉\n${year}년 ${month}월 ${day}일에 도착할 거예요.\n\nFuture Time Capsule — futuretimecapsule.com`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ text });
+      } catch {
+        // 사용자가 취소한 경우 무시
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert('링크가 복사됐어요!');
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -236,35 +251,84 @@ function CapsuleModal({
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         className="relative w-full max-w-sm bg-white/90 backdrop-blur-2xl border border-white/30 rounded-[2.5rem] shadow-2xl overflow-hidden"
       >
-        <div className="p-8 md:p-12 text-center space-y-4">
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 p-2 text-slate-500 hover:text-slate-800 hover:bg-white/20 rounded-full transition-all"
-          >
-            <X size={20} />
-          </button>
-          {capsuleData && (
-            <img
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 p-2 text-slate-500 hover:text-slate-800 hover:bg-white/20 rounded-full transition-all z-10"
+        >
+          <X size={20} />
+        </button>
+
+        {/* 상단 색상 배경 영역 */}
+        <div
+          className="pt-12 pb-8 px-8 flex flex-col items-center gap-4"
+          style={{ background: `linear-gradient(160deg, ${selectedColor}60 0%, ${selectedColor}20 100%)` }}
+        >
+          {capsuleData ? (
+            <motion.img
               src={capsuleData.image}
               alt={capsuleData.text}
-              className="mx-auto w-24 h-24 object-contain"
+              className="w-28 h-28 object-contain drop-shadow-xl"
+              initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+              animate={{ scale: 1, opacity: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+              onError={(e) => {
+                // 이미지 로드 실패 시 색상 원으로 대체
+                const target = e.currentTarget as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'flex';
+              }}
             />
-          )}
-          <p className="text-xs text-slate-400 uppercase tracking-[0.2em]">
-            {capsuleData?.text}
+          ) : null}
+          {/* 이미지 로드 실패 fallback */}
+          <div
+            className="w-28 h-28 rounded-full border-4 border-white/60 shadow-xl hidden items-center justify-center"
+            style={{ background: selectedColor, display: 'none' }}
+          />
+          <p className="text-xs font-bold tracking-[0.25em] uppercase" style={{ color: `color-mix(in srgb, ${selectedColor} 50%, #6b7280)` }}>
+            {capsuleData?.text ?? ''}
           </p>
-          <h2 className="text-2xl font-extrabold text-slate-800">
-            편지가 캡슐에 담겼어요.
-          </h2>
-          <p className="text-sm text-slate-600">
-            {month}월 {day}일에 도착합니다.
+        </div>
+
+        {/* 하단 내용 영역 */}
+        <div className="px-8 pb-8 pt-6 space-y-5 text-center">
+          <div className="space-y-2">
+            <h2 style={{ fontFamily: "'Dancing Script', cursive", fontSize: '1.75rem', color: '#CFBCF5', fontWeight: 700, lineHeight: 1.2 }}>
+              편지가 캡슐에 담겼어요
+            </h2>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              과거의 내가 보낸 편지가<br />
+              <span className="font-bold text-slate-700">{year}년 {month}월 {day}일</span>에 이메일로 도착해요.
+            </p>
+          </div>
+
+          <div className="bg-violet-50 rounded-2xl p-4 border border-violet-100">
+            <p className="text-xs text-violet-500 mb-1">예상 도착일</p>
+            <p className="text-base font-extrabold text-violet-700">
+              {year}. {String(month).padStart(2, '0')}. {String(day).padStart(2, '0')}
+            </p>
+            <p className="text-xs text-violet-400 mt-1">오전 9시 (KST) 도착 예정</p>
+          </div>
+
+          <p className="text-xs text-slate-400 leading-snug">
+            스팸함도 꼭 확인해주세요 📬
           </p>
-          <button
-            onClick={onClose}
-            className="mt-4 w-full rounded-2xl bg-violet-600 text-white py-3 font-semibold shadow-lg shadow-violet-500/20 hover:bg-violet-700 transition-all"
-          >
-            닫기
-          </button>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleShare}
+              className="flex-1 py-3 rounded-2xl border border-violet-200 bg-violet-50 text-violet-600 font-semibold text-sm hover:bg-violet-100 transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>공유하기</span>
+              <span>↗</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 text-white font-semibold text-sm shadow-lg shadow-violet-500/20 hover:from-violet-600 hover:to-purple-600 transition-all"
+            >
+              확인
+            </button>
+          </div>
         </div>
       </motion.div>
     </div>
