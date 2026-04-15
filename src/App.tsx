@@ -3,10 +3,25 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
 
 import { supabase } from './supabase';
-import Bootpay from '@bootpay/client-js';
+
+// ─── 토스페이 타입 선언 ──────────────────────────────
+declare global {
+  interface Window {
+    TossPayments?: (clientKey: string) => {
+      requestPayment: (method: string, options: Record<string, unknown>) => Promise<void>;
+    };
+    // 앱인토스 환경: TossSDK (미니앱 내 결제 브릿지)
+    TossSDK?: {
+      payment: {
+        request: (options: Record<string, unknown>) => Promise<{ paymentKey: string; orderId: string; amount: number }>;
+      };
+    };
+  }
+}
 
 // ─── 상수 ───────────────────────────────────────────
-const BOOTPAY_APPLICATION_ID = '69c5e993a4c431ccafe661b6'; // JavaScript WEB 키
+// 앱인토스 콘솔에서 발급받은 Client Key로 교체하세요
+const TOSSPAY_CLIENT_KEY = 'test_ck_placeholder'; // TODO: 앱인토스 콘솔 → 수익화 → 토스페이 Client Key
 
 const QUESTIONS = [
   "지금 이 순간, 미래의 나에게 전하고 싶은 한 마디는?",
@@ -97,36 +112,45 @@ function PaymentModal({
     try {
       const orderId = `ftc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-      const response = await Bootpay.requestPayment({
-        application_id: BOOTPAY_APPLICATION_ID,
-        price: 1000,
-        order_name: `Future Time Capsule — ${label} 편지 발송`,
-        order_id: orderId,
-        items: [
-          {
-            id: `delivery_${deliveryOption}`,
-            name: `${label} 편지 발송`,
-            qty: 1,
-            price: 1000,
-          },
-        ],
-        user: {
-          username: '편지 작성자',
-        },
-        extra: {
-          open_type: 'popup',
-          card_quota: '0',
-          escrow: false,
-        },
+      // ── 앱인토스 미니앱 환경: TossSDK 브릿지 사용 ──
+      if (window.TossSDK) {
+        await window.TossSDK.payment.request({
+          amount: 1000,
+          orderId,
+          orderName: `Future Time Capsule — ${label} 편지 발송`,
+          customerName: '편지 작성자',
+        });
+        setIsPaying(false);
+        onPaid();
+        return;
+      }
+
+      // ── 일반 웹 환경 (개발/테스트): TossPayments SDK ──
+      if (!window.TossPayments) {
+        throw new Error('TossPayments SDK가 로드되지 않았습니다.');
+      }
+      const tossPayments = window.TossPayments(TOSSPAY_CLIENT_KEY);
+      await tossPayments.requestPayment('카드', {
+        amount: 1000,
+        orderId,
+        orderName: `Future Time Capsule — ${label} 편지 발송`,
+        customerName: '편지 작성자',
+        successUrl: `${window.location.origin}/?payment=success`,
+        failUrl: `${window.location.origin}/?payment=fail`,
       });
 
-      console.log('결제 성공:', response);
+      // requestPayment는 리다이렉트 방식이므로 아래는 팝업 방식일 때만 실행됨
       setIsPaying(false);
       onPaid();
     } catch (e: unknown) {
       setIsPaying(false);
-      const err = e as { message?: string };
-      if (err?.message && err.message.toLowerCase().includes('cancel')) return;
+      const err = e as { code?: string; message?: string };
+      // 사용자가 직접 취소한 경우 — 에러 표시 없이 조용히 닫기
+      if (
+        err?.code === 'USER_CANCEL' ||
+        err?.message?.toLowerCase().includes('cancel') ||
+        err?.message?.toLowerCase().includes('취소')
+      ) return;
       console.error('결제 실패:', e);
       alert('결제에 실패했어요. 다시 시도해주세요.');
     }
@@ -178,7 +202,7 @@ function PaymentModal({
             <p className="text-3xl font-extrabold text-slate-900">
               1,000<span className="text-lg font-semibold text-slate-500">원</span>
             </p>
-            <p className="text-xs text-slate-400 mt-1">1회 단건 결제 · 카드/간편결제</p>
+            <p className="text-xs text-slate-400 mt-1">1회 단건 결제 · 토스페이</p>
           </div>
 
           <button
@@ -726,7 +750,12 @@ export default function App() {
             deliveryOption={deliveryOption}
             deliveryDate={deliveryDate}
             selectedColor={selectedColor}
-            onClose={() => setShowPayment(false)}
+            onClose={() => {
+              setShowPayment(false);
+              // 결제 취소 시 캡슐 상태 초기화 — 편지지 색이 남지 않도록
+              setSelectedColor(null);
+              setCapsulePhase('idle');
+            }}
             onFreeFallback={handleFreeFallback}
             onPaid={handlePaid}
           />
