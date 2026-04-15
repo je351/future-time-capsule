@@ -16,6 +16,18 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+const BUBBLE_MAP: Record<string, string> = {
+  '#E8DFFF': '/images/bubble-lavender.png',
+  '#FFE4D6': '/images/bubble-peach.png',
+  '#D6F5EE': '/images/bubble-mint.png',
+  '#D6EEFF': '/images/bubble-blue.png',
+};
+
+function getBubbleImage(letterColor: string | null): string {
+  if (!letterColor) return '/images/bubble-lavender.png';
+  return BUBBLE_MAP[letterColor] ?? '/images/bubble-lavender.png';
+}
+
 function splitLines(content: string): string[] {
   return content.split('\n');
 }
@@ -117,7 +129,8 @@ function GlassCapsule({ onClick }: { onClick: () => void }) {
 }
 
 // ── 편지 카드 ─────────────────────────────────────
-function LetterCard({ content, date, showDate, handleSave, navigate, isSaving }: { content: string; date: string; showDate: boolean; handleSave: () => void; navigate: (path: string) => void; isSaving: boolean }) {
+function LetterCard({ content, date, showDate, handleSave, navigate, isSaving, letterColor }: { content: string; date: string; showDate: boolean; handleSave: () => void; navigate: (path: string) => void; isSaving: boolean; letterColor: string | null }) {
+  const bubbleImg = getBubbleImage(letterColor);
   return (
     <div className="relative w-full mx-auto" style={{ padding: '48px 0', height: 'auto', maxWidth: '800px' }}>
       {showDate && (
@@ -139,10 +152,10 @@ function LetterCard({ content, date, showDate, handleSave, navigate, isSaving }:
         }}>
           Dear,
         </h2>
-        <img src="/images/bubble.png" alt="" style={{
+        <img src={bubbleImg} alt="" style={{
           position: 'absolute', top: '14px', right: '-40px', width: '40px', height: '40px', opacity: 0.8, zIndex: 2
         }} />
-        <img src="/images/bubble.png" alt="" style={{
+        <img src={bubbleImg} alt="" style={{
           position: 'absolute', top: '10px', right: '-60px', width: '20px', height: '20px', opacity: 0.8, zIndex: 1
         }} />
       </div>
@@ -349,6 +362,7 @@ export default function LetterPage() {
                 handleSave={handleSave}
                 navigate={navigate}
                 isSaving={isSaving}
+                letterColor={letter.letter_color}
               />
             </div>
           </div>
