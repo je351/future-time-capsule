@@ -17,15 +17,15 @@ function formatDate(dateStr: string) {
 }
 
 const BUBBLE_MAP: Record<string, string> = {
-  '#E8DFFF': '/images/bubble-lavender.png',
-  '#FFE4D6': '/images/bubble-peach.png',
-  '#D6F5EE': '/images/bubble-mint.png',
-  '#D6EEFF': '/images/bubble-blue.png',
+  '#E8DFFF': '/images/bubble-lavender.webp',
+  '#FFE4D6': '/images/bubble-peach.webp',
+  '#D6F5EE': '/images/bubble-mint.webp',
+  '#D6EEFF': '/images/bubble-blue.webp',
 };
 
 function getBubbleImage(letterColor: string | null): string {
-  if (!letterColor) return '/images/bubble-lavender.png';
-  return BUBBLE_MAP[letterColor] ?? '/images/bubble-lavender.png';
+  if (!letterColor) return '/images/bubble-lavender.webp';
+  return BUBBLE_MAP[letterColor] ?? '/images/bubble-lavender.webp';
 }
 
 function splitLines(content: string): string[] {

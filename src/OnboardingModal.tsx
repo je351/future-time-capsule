@@ -7,19 +7,13 @@ import { X } from 'lucide-react';
 
 const STORAGE_KEY = 'ftc_onboarding_seen';
 
-// 구슬 11개 위치/크기 (첨부 이미지 참고 — 왼쪽에서 아래로 흩뿌리기)
+// 구슬 5개 — blur 제거, opacity만으로 그림자 느낌
 const BUBBLES = [
-  { size: 140, top: -30,  left: -20,  opacity: 0.3,  blur: 2, delay: 0.1  },
-  { size: 60,  top: 65,   left: 88,   opacity: 0.25, blur: 1, delay: 0.18 },
-  { size: 35,  top: 115,  left: 48,   opacity: 0.2,  blur: 1, delay: 0.24 },
-  { size: 20,  top: 155,  left: 18,   opacity: 0.18, blur: 1, delay: 0.28 },
-  { size: 55,  top: 182,  left: 52,   opacity: 0.22, blur: 1, delay: 0.32 },
-  { size: 30,  top: 205,  left: 108,  opacity: 0.18, blur: 1, delay: 0.36 },
-  { size: 45,  top: 252,  left: 28,   opacity: 0.2,  blur: 1, delay: 0.4  },
-  { size: 25,  top: 292,  left: 88,   opacity: 0.16, blur: 1, delay: 0.44 },
-  { size: 18,  top: 325,  left: 12,   opacity: 0.15, blur: 1, delay: 0.48 },
-  { size: 35,  top: 352,  left: 58,   opacity: 0.18, blur: 1, delay: 0.52 },
-  { size: 15,  top: 385,  left: 102,  opacity: 0.12, blur: 1, delay: 0.56 },
+  { size: 140, top: -30,  left: -20,  opacity: 0.28, delay: 0.1  },
+  { size: 60,  top: 65,   left: 88,   opacity: 0.22, delay: 0.18 },
+  { size: 35,  top: 155,  left: 18,   opacity: 0.18, delay: 0.26 },
+  { size: 55,  top: 240,  left: 52,   opacity: 0.2,  delay: 0.34 },
+  { size: 25,  top: 340,  left: 88,   opacity: 0.15, delay: 0.42 },
 ];
 
 export default function OnboardingModal() {
@@ -80,7 +74,7 @@ export default function OnboardingModal() {
               {BUBBLES.map((b, i) => (
                 <motion.img
                   key={i}
-                  src="/images/bubble-lavender.png"
+                  src="/images/bubble-lavender.webp"
                   alt=""
                   initial={{ opacity: 0, scale: 0.6 }}
                   animate={{ opacity: b.opacity, scale: 1 }}
@@ -93,7 +87,6 @@ export default function OnboardingModal() {
                     left: b.left,
                     pointerEvents: 'none',
                     userSelect: 'none',
-                    filter: `blur(${b.blur}px)`,
                   }}
                 />
               ))}

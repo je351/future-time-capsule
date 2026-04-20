@@ -37,10 +37,10 @@ const QUESTIONS = [
 const CAPSULE_COLORS = ['#E8DFFF', '#FFE4D6', '#D6F5EE', '#D6EEFF'];
 const CAPSULE_NAMES = ['라벤더', '피치', '민트', '스카이'];
 const CAPSULE_MAPPING = {
-  '#E8DFFF': { image: '/images/bubble-lavender.png', text: '기다림의 보답' },
-  '#FFE4D6': { image: '/images/bubble-peach.png', text: '피어나는 용기' },
-  '#D6F5EE': { image: '/images/bubble-mint.png', text: '새로운 시작' },
-  '#D6EEFF': { image: '/images/bubble-blue.png', text: '진실된 마음' },
+  '#E8DFFF': { image: '/images/bubble-lavender.webp', text: '기다림의 보답' },
+  '#FFE4D6': { image: '/images/bubble-peach.webp', text: '피어나는 용기' },
+  '#D6F5EE': { image: '/images/bubble-mint.webp', text: '새로운 시작' },
+  '#D6EEFF': { image: '/images/bubble-blue.webp', text: '진실된 마음' },
 };
 
 const BORDER_CAPSULES = Array.from({ length: 12 }, (_, i) => ({
