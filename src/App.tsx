@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
 
 import { supabase } from './supabase';
+import OnboardingModal from './OnboardingModal';
 
 // ─── 토스페이 타입 선언 ──────────────────────────────
 declare global {
@@ -500,6 +501,8 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-50 text-slate-800 font-sans selection:bg-blue-200 selection:text-blue-900">
+
+      <OnboardingModal />
 
       <div className="fixed inset-0 z-0 bg-slate-100">
         <iframe
