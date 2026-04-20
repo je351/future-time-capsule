@@ -101,7 +101,7 @@ export default function OnboardingModal() {
 
             {/* 본문 — 구슬 위 오버레이 */}
             <div className="relative z-10 flex flex-col justify-between" style={{ minHeight: 420 }}>
-              <div style={{ padding: '52px 28px 0 28px', textAlign: 'center' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '28px 28px 0 28px', textAlign: 'center' }}>
                 <motion.h1
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
