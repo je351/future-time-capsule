@@ -109,30 +109,15 @@ export default function OnboardingModal() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.55 }}
-                style={{ fontSize: 14, color: '#6A5A8A', lineHeight: 1.75, marginBottom: 20 }}
+                style={{ fontSize: 15, color: '#6A5A8A', lineHeight: 1.9, marginBottom: 20 }}
               >
-                지금 이 순간의 나를<br />
-                미래의 내가 받아볼 수 있다면?
+                오늘의 나를<br />
+                미래의 내가 알아줬으면.<br />
+                <br />
+                <span style={{ fontSize: 13, color: '#9A8ABB' }}>
+                  그때의 나를 알아주는 건<br />결국 나 자신이에요.
+                </span>
               </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.62 }}
-                style={{
-                  background: 'rgba(232, 223, 255, 0.3)',
-                  borderRadius: 16,
-                  padding: '14px 16px',
-                  marginBottom: 20,
-                  border: '1px solid rgba(200, 180, 240, 0.2)',
-                }}
-              >
-                <p style={{ fontSize: 13, color: '#8A7AAA', lineHeight: 1.7, margin: 0 }}>
-                  편지를 쓰고 날짜를 고르면<br />
-                  그날 아침 이메일로 조용히 도착해요.<br />
-                  <span style={{ color: '#B09AE0', fontStyle: 'italic' }}>3일 후는 무료로 보낼 수 있어요.</span>
-                </p>
-              </motion.div>
             </div>
 
             {/* CTA 버튼 */}
@@ -162,7 +147,7 @@ export default function OnboardingModal() {
                 onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
                 onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
               >
-                미래의 나에게 편지 쓰기 →
+                지금 미래의 나에게 편지 쓰기 →
               </button>
             </motion.div>
           </motion.div>
