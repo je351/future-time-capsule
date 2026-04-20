@@ -58,7 +58,7 @@ export default function TermsPage() {
       <section className="mb-10">
         <h2 className="text-base font-semibold text-gray-900 mb-3">제5조 (결제 및 환불)</h2>
         <ol className="list-decimal list-inside space-y-2 pl-1">
-          <li>유료 서비스 이용 요금은 1,000원(부가세 포함)이며, 부트페이(Bootpay)를 통해 결제됩니다.</li>
+          <li>유료 서비스 이용 요금은 1,000원(부가세 포함)이며, 토스페이(Toss Payments)를 통해 결제됩니다.</li>
           <li>
             결제 완료 후 편지가 아직 발송되지 않은 경우, 고객문의 이메일을 통해 환불을
             요청하실 수 있습니다.

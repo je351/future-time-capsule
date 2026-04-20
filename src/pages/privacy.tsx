@@ -28,7 +28,8 @@ export default function PrivacyPage() {
             {[
               ["무료 서비스", "발신자 이메일 주소", "편지 발송"],
               ["유료 서비스", "발신자 이메일, 수신자 이메일", "편지 발송 및 결제 확인"],
-              ["결제", "결제 정보 (Stripe 직접 처리)", "서비스 요금 청구"],
+              ["결제", "결제 정보 (토스페이먼츠 직접 처리)", "서비스 요금 청구"],
+              ["토스 로그인", "이름, 단말식별번호, PUSH토큰", "로그인 인증 및 알림 발송"],
             ].map(([a, b, c]) => (
               <tr key={a} className="border-b border-gray-100">
                 <td className="py-2 pr-4 text-gray-600">{a}</td>
@@ -39,7 +40,7 @@ export default function PrivacyPage() {
           </tbody>
         </table>
         <p className="text-gray-500 text-xs mt-2">
-          * 결제 카드 정보는 회사 서버에 저장되지 않으며, Stripe이 직접 처리합니다.
+          * 결제 카드 정보는 회사 서버에 저장되지 않으며, 토스페이먼츠(주)가 직접 처리합니다.
         </p>
       </section>
 
@@ -83,7 +84,7 @@ export default function PrivacyPage() {
           </thead>
           <tbody>
             {[
-              ["Stripe, Inc.", "결제 처리"],
+              ["토스페이먼츠(주)", "간편결제 처리 및 로그인 인증"],
               ["Resend", "이메일 발송"],
               ["Supabase, Inc.", "데이터베이스 운영"],
             ].map(([company, task]) => (
