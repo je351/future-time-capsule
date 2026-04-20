@@ -99,7 +99,7 @@ export default function OnboardingModal() {
               ))}
             </div>
 
-            {/* 본문 — 가운데 정렬 */}
+            {/* 본문 — 구슬 위 오버레이 */}
             <div className="relative z-10 flex flex-col justify-between" style={{ minHeight: 420 }}>
               <div style={{ padding: '52px 28px 0 28px', textAlign: 'center' }}>
                 <motion.h1
@@ -111,31 +111,37 @@ export default function OnboardingModal() {
                     fontSize: '1.4rem',
                     color: '#CFBCF5',
                     fontWeight: 700,
-                    marginBottom: 16,
+                    marginBottom: 40,
                     lineHeight: 1.3,
                   }}
                 >
-                  Future Time<br />Capsule
+                  Future Time Capsule
                 </motion.h1>
 
+                {/* 메인 카피 — 구슬 위 오버레이, 한 줄 */}
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  style={{ fontSize: 14, color: '#6A5A8A', lineHeight: 1.9, marginBottom: 12 }}
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: '#5A4A7A',
+                    lineHeight: 1.5,
+                    marginBottom: 16,
+                    whiteSpace: 'nowrap',
+                  }}
                 >
-                  오늘의 나를,<br />
-                  미래의 내가<br />
-                  알아준다면.
+                  오늘의 나를, 미래의 내가 알아준다면.
                 </motion.p>
 
                 <motion.p
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.68 }}
-                  style={{ fontSize: 12, color: '#9A8ABB', lineHeight: 1.7 }}
+                  style={{ fontSize: 13, color: '#9A8ABB', lineHeight: 1.7 }}
                 >
-                  미래의 나에게<br />편지를 보내요.
+                  미래의 나에게 편지를 보내요.
                 </motion.p>
               </div>
 
@@ -166,7 +172,7 @@ export default function OnboardingModal() {
                   onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
                   onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
                 >
-                  지금 미래의 나에게 편지 쓰기 →
+                  나에게 편지 쓰기 →
                 </button>
               </motion.div>
             </div>
