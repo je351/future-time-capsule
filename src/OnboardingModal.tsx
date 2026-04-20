@@ -9,17 +9,17 @@ const STORAGE_KEY = 'ftc_onboarding_seen';
 
 // 구슬 11개 위치/크기 (첨부 이미지 참고 — 왼쪽에서 아래로 흩뿌리기)
 const BUBBLES = [
-  { size: 140, top: -30,  left: -20,  opacity: 0.75, delay: 0.1  },
-  { size: 60,  top: 65,   left: 88,   opacity: 0.6,  delay: 0.18 },
-  { size: 35,  top: 115,  left: 48,   opacity: 0.5,  delay: 0.24 },
-  { size: 20,  top: 155,  left: 18,   opacity: 0.4,  delay: 0.28 },
-  { size: 55,  top: 182,  left: 52,   opacity: 0.55, delay: 0.32 },
-  { size: 30,  top: 205,  left: 108,  opacity: 0.45, delay: 0.36 },
-  { size: 45,  top: 252,  left: 28,   opacity: 0.5,  delay: 0.4  },
-  { size: 25,  top: 292,  left: 88,   opacity: 0.4,  delay: 0.44 },
-  { size: 18,  top: 325,  left: 12,   opacity: 0.35, delay: 0.48 },
-  { size: 35,  top: 352,  left: 58,   opacity: 0.45, delay: 0.52 },
-  { size: 15,  top: 385,  left: 102,  opacity: 0.3,  delay: 0.56 },
+  { size: 140, top: -30,  left: -20,  opacity: 0.3,  blur: 2, delay: 0.1  },
+  { size: 60,  top: 65,   left: 88,   opacity: 0.25, blur: 1, delay: 0.18 },
+  { size: 35,  top: 115,  left: 48,   opacity: 0.2,  blur: 1, delay: 0.24 },
+  { size: 20,  top: 155,  left: 18,   opacity: 0.18, blur: 1, delay: 0.28 },
+  { size: 55,  top: 182,  left: 52,   opacity: 0.22, blur: 1, delay: 0.32 },
+  { size: 30,  top: 205,  left: 108,  opacity: 0.18, blur: 1, delay: 0.36 },
+  { size: 45,  top: 252,  left: 28,   opacity: 0.2,  blur: 1, delay: 0.4  },
+  { size: 25,  top: 292,  left: 88,   opacity: 0.16, blur: 1, delay: 0.44 },
+  { size: 18,  top: 325,  left: 12,   opacity: 0.15, blur: 1, delay: 0.48 },
+  { size: 35,  top: 352,  left: 58,   opacity: 0.18, blur: 1, delay: 0.52 },
+  { size: 15,  top: 385,  left: 102,  opacity: 0.12, blur: 1, delay: 0.56 },
 ];
 
 export default function OnboardingModal() {
@@ -93,14 +93,15 @@ export default function OnboardingModal() {
                     left: b.left,
                     pointerEvents: 'none',
                     userSelect: 'none',
+                    filter: `blur(${b.blur}px)`,
                   }}
                 />
               ))}
             </div>
 
-            {/* 본문 — 오른쪽에 텍스트 */}
+            {/* 본문 — 가운데 정렬 */}
             <div className="relative z-10 flex flex-col justify-between" style={{ minHeight: 420 }}>
-              <div style={{ padding: '52px 28px 0 0', marginLeft: 'auto', maxWidth: '58%' }}>
+              <div style={{ padding: '52px 28px 0 28px', textAlign: 'center' }}>
                 <motion.h1
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
