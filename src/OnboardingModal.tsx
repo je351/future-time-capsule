@@ -7,13 +7,27 @@ import { X } from 'lucide-react';
 
 const STORAGE_KEY = 'ftc_onboarding_seen';
 
+// 구슬 11개 위치/크기 (첨부 이미지 참고 — 왼쪽에서 아래로 흩뿌리기)
+const BUBBLES = [
+  { size: 140, top: -30,  left: -20,  opacity: 0.75, delay: 0.1  },
+  { size: 60,  top: 65,   left: 88,   opacity: 0.6,  delay: 0.18 },
+  { size: 35,  top: 115,  left: 48,   opacity: 0.5,  delay: 0.24 },
+  { size: 20,  top: 155,  left: 18,   opacity: 0.4,  delay: 0.28 },
+  { size: 55,  top: 182,  left: 52,   opacity: 0.55, delay: 0.32 },
+  { size: 30,  top: 205,  left: 108,  opacity: 0.45, delay: 0.36 },
+  { size: 45,  top: 252,  left: 28,   opacity: 0.5,  delay: 0.4  },
+  { size: 25,  top: 292,  left: 88,   opacity: 0.4,  delay: 0.44 },
+  { size: 18,  top: 325,  left: 12,   opacity: 0.35, delay: 0.48 },
+  { size: 35,  top: 352,  left: 58,   opacity: 0.45, delay: 0.52 },
+  { size: 15,  top: 385,  left: 102,  opacity: 0.3,  delay: 0.56 },
+];
+
 export default function OnboardingModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const seen = localStorage.getItem(STORAGE_KEY);
     if (!seen) {
-      // 약간의 딜레이 후 표시 (페이지 로딩 후 자연스럽게)
       const timer = setTimeout(() => setIsOpen(true), 600);
       return () => clearTimeout(timer);
     }
@@ -45,111 +59,116 @@ export default function OnboardingModal() {
             transition={{ type: 'spring', stiffness: 280, damping: 22 }}
             className="relative w-full max-w-sm overflow-hidden"
             style={{
-              background: 'linear-gradient(160deg, #fdf6ff 0%, #f5f0ff 50%, #fef9f5 100%)',
+              background: 'rgba(255, 255, 255, 0.82)',
               borderRadius: '2.5rem',
-              boxShadow: '0 24px 60px rgba(140, 100, 200, 0.18), 0 4px 20px rgba(0,0,0,0.06)',
+              boxShadow: '0 24px 60px rgba(140, 100, 200, 0.15), 0 4px 20px rgba(0,0,0,0.05)',
               border: '1px solid rgba(255,255,255,0.9)',
+              minHeight: 420,
             }}
           >
             {/* 닫기 버튼 */}
             <button
               onClick={handleClose}
-              className="absolute top-5 right-5 z-10 p-1.5 rounded-full transition-all"
+              className="absolute top-5 right-5 z-20 p-1.5 rounded-full transition-all"
               style={{ color: '#C0B0D8', background: 'rgba(200,180,230,0.15)' }}
             >
               <X size={16} />
             </button>
 
-            {/* 상단 캡슐 장식 */}
-            <div className="flex justify-center pt-10 pb-2">
-              <div className="flex gap-2 items-end">
-                {[
-                  { color: '#E8DFFF', size: 36, delay: 0 },
-                  { color: '#FFE4D6', size: 48, delay: 0.08 },
-                  { color: '#D6F5EE', size: 36, delay: 0.16 },
-                  { color: '#D6EEFF', size: 28, delay: 0.24 },
-                ].map((c, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 12, scale: 0.7 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: c.delay + 0.3, type: 'spring', stiffness: 300, damping: 20 }}
-                    style={{
-                      width: c.size,
-                      height: c.size,
-                      borderRadius: '50%',
-                      background: `radial-gradient(circle at 35% 35%, white, ${c.color})`,
-                      boxShadow: `0 4px 16px ${c.color}99`,
-                      flexShrink: 0,
-                    }}
-                  />
-                ))}
+            {/* 구슬 11개 */}
+            <div className="absolute inset-0 z-0 overflow-hidden" style={{ borderRadius: '2.5rem' }}>
+              {BUBBLES.map((b, i) => (
+                <motion.img
+                  key={i}
+                  src="/images/bubble-lavender.png"
+                  alt=""
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: b.opacity, scale: 1 }}
+                  transition={{ delay: b.delay, duration: 0.5, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute',
+                    width: b.size,
+                    height: b.size,
+                    top: b.top,
+                    left: b.left,
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* 본문 — 오른쪽에 텍스트 */}
+            <div className="relative z-10 flex flex-col justify-between" style={{ minHeight: 420 }}>
+              <div style={{ padding: '52px 28px 0 0', marginLeft: 'auto', maxWidth: '58%' }}>
+                <motion.h1
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  style={{
+                    fontFamily: "'Dancing Script', cursive",
+                    fontSize: '1.4rem',
+                    color: '#CFBCF5',
+                    fontWeight: 700,
+                    marginBottom: 16,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  Future Time<br />Capsule
+                </motion.h1>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  style={{ fontSize: 14, color: '#6A5A8A', lineHeight: 1.9, marginBottom: 12 }}
+                >
+                  오늘의 나를,<br />
+                  미래의 내가<br />
+                  알아준다면.
+                </motion.p>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.68 }}
+                  style={{ fontSize: 12, color: '#9A8ABB', lineHeight: 1.7 }}
+                >
+                  미래의 나에게<br />편지를 보내요.
+                </motion.p>
               </div>
-            </div>
 
-            {/* 본문 */}
-            <div className="px-8 pt-4 pb-2">
-              <motion.h1
+              {/* CTA 버튼 */}
+              <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45 }}
-                style={{
-                  fontFamily: "'Dancing Script', cursive",
-                  fontSize: '1.8rem',
-                  color: '#CFBCF5',
-                  fontWeight: 700,
-                  marginBottom: 12,
-                  lineHeight: 1.2,
-                }}
+                transition={{ delay: 0.75 }}
+                style={{ padding: '24px 24px 28px' }}
               >
-                Future Time Capsule
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.55 }}
-                style={{ fontSize: 15, color: '#6A5A8A', lineHeight: 1.9, marginBottom: 20 }}
-              >
-                오늘의 나를<br />
-                미래의 내가 알아줬으면.<br />
-                <br />
-                <span style={{ fontSize: 13, color: '#9A8ABB' }}>
-                  그때의 나를 알아주는 건<br />결국 나 자신이에요.
-                </span>
-              </motion.p>
+                <button
+                  onClick={handleClose}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    borderRadius: 99,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    background: 'linear-gradient(to right, #ffd6e0, #e8d5f5, #d5e8ff)',
+                    color: '#8A7AAA',
+                    fontFamily: 'inherit',
+                    letterSpacing: '-0.01em',
+                    boxShadow: '0 4px 20px rgba(200, 160, 220, 0.3)',
+                    transition: 'all .2s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
+                >
+                  지금 미래의 나에게 편지 쓰기 →
+                </button>
+              </motion.div>
             </div>
-
-            {/* CTA 버튼 */}
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7 }}
-              style={{ padding: '0 24px 28px' }}
-            >
-              <button
-                onClick={handleClose}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: 99,
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 15,
-                  fontWeight: 600,
-                  background: 'linear-gradient(to right, #C4B0F0, #A090D8)',
-                  color: 'white',
-                  fontFamily: 'inherit',
-                  letterSpacing: '-0.01em',
-                  boxShadow: '0 4px 20px rgba(160, 130, 220, 0.35)',
-                  transition: 'all .2s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
-                onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
-              >
-                지금 미래의 나에게 편지 쓰기 →
-              </button>
-            </motion.div>
           </motion.div>
         </div>
       )}
