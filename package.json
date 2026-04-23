@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "granite dev",
-    "build": "ait build",
+    "build": "vite build",
+    "build:ait": "ait build",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
