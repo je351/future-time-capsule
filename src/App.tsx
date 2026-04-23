@@ -162,7 +162,7 @@ function PaymentModal({
     }
   };
 
-  const capsuleData = selectedColor ? CAPSULE_MAPPING[selectedColor as keyof typeof CAPSULE_MAPPING] : null;
+  const capsuleData = CAPSULE_MAPPING[(selectedColor ?? '#E8DFFF') as keyof typeof CAPSULE_MAPPING];
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -746,24 +746,9 @@ export default function App() {
                           : 'bg-white text-slate-500 border-slate-200 hover:border-violet-300 hover:text-violet-600'
                       }`}
                     >
-                      {opt === '3days' && (
-                        <span className="flex flex-col items-center gap-0.5">
-                          <span>3일 후</span>
-                          <span className="text-[10px] opacity-70">무료</span>
-                        </span>
-                      )}
-                      {opt === '1week' && (
-                        <span className="flex flex-col items-center gap-0.5">
-                          <span>1주일 후</span>
-                          <span className="text-[10px] opacity-70">1,000원</span>
-                        </span>
-                      )}
-                      {opt === '1month' && (
-                        <span className="flex flex-col items-center gap-0.5">
-                          <span>1달 후</span>
-                          <span className="text-[10px] opacity-70">1,500원</span>
-                        </span>
-                      )}
+                      {opt === '3days' && '3일 후'}
+                      {opt === '1week' && '1주일 후'}
+                      {opt === '1month' && '1달 후'}
                     </button>
                   ))}
                 </div>
