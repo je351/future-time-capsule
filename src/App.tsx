@@ -5,7 +5,9 @@ import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
 
 import { supabase } from './supabase';
 import OnboardingModal from './OnboardingModal';
-import { graniteEvent, getAnonymousKey, openURL } from '@apps-in-toss/web-framework';
+// 앱인토스 SDK — 브라우저 환경에서는 로드하지 않음
+const isAppsInToss = typeof window !== 'undefined' && !!(window as any).TossSDK || 
+  typeof navigator !== 'undefined' && navigator.userAgent.includes('TossApp');
 
 // ─── 토스페이 타입 선언 ──────────────────────────────
 declare global {
@@ -424,12 +426,12 @@ export default function App() {
   useEffect(() => {
     const fetchAnonymousKey = async () => {
       try {
+        const { getAnonymousKey } = await import('@apps-in-toss/web-framework');
         const key = await getAnonymousKey();
         setAnonymousKey(key);
         localStorage.setItem('ftc_anonymous_key', key);
       } catch (e) {
         // 앱인토스 외부 환경(일반 웹)에서는 무시
-        console.warn('getAnonymousKey 실패 (앱인토스 환경 아님):', e);
       }
     };
     fetchAnonymousKey();
@@ -445,40 +447,48 @@ export default function App() {
 
   // ─── 앱인토스 뒤로가기 이벤트 ───────────────────────
   useEffect(() => {
-    const unsubscription = graniteEvent.addEventListener('backEvent', {
-      onEvent: () => {
-        if (letterContent.trim()) {
-          const shouldLeave = window.confirm('작성 중인 편지가 저장되지 않아요. 나가시겠어요?');
-          if (shouldLeave) {
-            navigate(-1);
-          }
-        } else {
-          navigate(-1);
-        }
-      },
-      onError: (error) => {
-        console.error(`뒤로가기 이벤트 오류: ${error}`);
-      },
-    });
-    return () => { unsubscription(); };
+    let unsubscription: (() => void) | null = null;
+    const setup = async () => {
+      try {
+        const { graniteEvent } = await import('@apps-in-toss/web-framework');
+        unsubscription = graniteEvent.addEventListener('backEvent', {
+          onEvent: () => {
+            if (letterContent.trim()) {
+              const shouldLeave = window.confirm('작성 중인 편지가 저장되지 않아요. 나가시겠어요?');
+              if (shouldLeave) navigate(-1);
+            } else {
+              navigate(-1);
+            }
+          },
+          onError: () => {},
+        });
+      } catch {}
+    };
+    setup();
+    return () => { if (unsubscription) unsubscription(); };
   }, [letterContent, navigate]);
 
   // ─── 앱인토스 홈 버튼 이벤트 ────────────────────────
   useEffect(() => {
-    const unsubscribe = graniteEvent.addEventListener('homeEvent', {
-      onEvent: () => {
-        setLetterContent('');
-        setEmail('');
-        setDeliveryOption('1month');
-        setSelectedColor(null);
-        setCapsulePhase('idle');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      },
-      onError: (error) => {
-        console.error(`홈 버튼 이벤트 오류: ${error}`);
-      },
-    });
-    return () => { unsubscribe(); };
+    let unsubscribe: (() => void) | null = null;
+    const setup = async () => {
+      try {
+        const { graniteEvent } = await import('@apps-in-toss/web-framework');
+        unsubscribe = graniteEvent.addEventListener('homeEvent', {
+          onEvent: () => {
+            setLetterContent('');
+            setEmail('');
+            setDeliveryOption('1month');
+            setSelectedColor(null);
+            setCapsulePhase('idle');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          },
+          onError: () => {},
+        });
+      } catch {}
+    };
+    setup();
+    return () => { if (unsubscribe) unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -834,7 +844,7 @@ export default function App() {
           <div className="flex justify-center gap-4 text-xs text-slate-400">
             <a href="/terms" className="hover:text-violet-500 transition-colors">이용약관</a>
             <a href="/privacy" className="hover:text-violet-500 transition-colors">개인정보처리방침</a>
-            <button onClick={() => openURL('mailto:je@nextstar.kr')} className="hover:text-violet-500 transition-colors">문의</button>
+            <button onClick={async () => { try { const { openURL } = await import('@apps-in-toss/web-framework'); openURL('mailto:je@nextstar.kr'); } catch { window.location.href = 'mailto:je@nextstar.kr'; } }} className="hover:text-violet-500 transition-colors">문의</button>
           </div>
         </footer>
       </div>
