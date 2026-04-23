@@ -1,11 +1,8 @@
 // src/OnboardingModal.tsx
-// 첫 방문 시 1회만 자동 표시되는 온보딩 모달
+// About 버튼(ℹ️)을 눌렀을 때만 표시되는 온보딩 모달
 
-import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
-
-const STORAGE_KEY = 'ftc_onboarding_seen';
 
 // 구슬 5개 — blur 제거, opacity만으로 그림자 느낌
 const BUBBLES = [
@@ -16,20 +13,9 @@ const BUBBLES = [
   { size: 25,  top: 340,  left: 88,   opacity: 0.15, delay: 0.42 },
 ];
 
-export default function OnboardingModal() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    const seen = localStorage.getItem(STORAGE_KEY);
-    if (!seen) {
-      const timer = setTimeout(() => setIsOpen(true), 600);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
+export default function OnboardingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const handleClose = () => {
-    localStorage.setItem(STORAGE_KEY, 'true');
-    setIsOpen(false);
+    onClose();
   };
 
   return (

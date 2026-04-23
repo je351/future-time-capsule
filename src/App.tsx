@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
 
 import { supabase } from './supabase';
 import OnboardingModal from './OnboardingModal';
+import { graniteEvent, getAnonymousKey, openURL } from '@apps-in-toss/web-framework';
 
 // ─── 토스페이 타입 선언 ──────────────────────────────
 declare global {
@@ -22,16 +24,16 @@ declare global {
 
 // ─── 상수 ───────────────────────────────────────────
 // 앱인토스 콘솔에서 발급받은 Client Key로 교체하세요
-const TOSSPAY_CLIENT_KEY = 'test_ck_placeholder'; // TODO: 앱인토스 콘솔 → 수익화 → 토스페이 Client Key
+const TOSSPAY_CLIENT_KEY = 'test_ck_E92LAa5PVbq0njGWZ9kB37YmpXyJ'; // TODO: 앱인토스 콘솔 → 수익화 → 토스페이 Client Key
 
 const QUESTIONS = [
-  "지금 이 순간, 미래의 나에게 전하고 싶은 한 마디는?",
-  "1년 후의 나는 지금 나를 어떻게 볼까?",
-  "요즘 가장 자주 드는 감정은 무엇인가요?",
-  "지금 결정하지 못하고 있는 것이 있나요?",
-  "오늘 하루, 기억하고 싶은 순간은?",
-  "지금의 나를 가장 잘 표현하는 단어는?",
-  "미래의 나에게 부탁하고 싶은 것이 있다면?",
+  "지금 포기하고 싶은 게 있다면, 그래도 계속하는 이유가 뭔가요?",
+  "1년 후의 내가 오늘을 돌아본다면, 뭐라고 할 것 같아요?",
+  "요즘 가장 두려운 것과, 그래도 앞으로 나아가는 이유는?",
+  "지금 이 시간이 의미 있으려면, 무엇이 달라져야 할까요?",
+  "지금의 나에게 가장 필요한 한 마디를 건넨다면?",
+  "지금 버티고 있는 것들이 있다면, 미래의 나는 그걸 어떻게 볼까요?",
+  "오늘의 나를 가장 잘 아는 사람은 나예요. 솔직히 지금 어때요?",
 ];
 
 const CAPSULE_COLORS = ['#E8DFFF', '#FFE4D6', '#D6F5EE', '#D6EEFF'];
@@ -104,6 +106,7 @@ function PaymentModal({
 }) {
   const [isPaying, setIsPaying] = useState(false);
   const label = deliveryOption === '1week' ? '1주일 후' : '1달 후';
+  const amount = deliveryOption === '1month' ? 1500 : 1000;
   const colorName = selectedColor
     ? CAPSULE_NAMES[CAPSULE_COLORS.indexOf(selectedColor)] ?? ''
     : '';
@@ -116,7 +119,7 @@ function PaymentModal({
       // ── 앱인토스 미니앱 환경: TossSDK 브릿지 사용 ──
       if (window.TossSDK) {
         await window.TossSDK.payment.request({
-          amount: 1000,
+          amount,
           orderId,
           orderName: `Future Time Capsule — ${label} 편지 발송`,
           customerName: '편지 작성자',
@@ -132,7 +135,7 @@ function PaymentModal({
       }
       const tossPayments = window.TossPayments(TOSSPAY_CLIENT_KEY);
       await tossPayments.requestPayment('카드', {
-        amount: 1000,
+        amount,
         orderId,
         orderName: `Future Time Capsule — ${label} 편지 발송`,
         customerName: '편지 작성자',
@@ -157,6 +160,8 @@ function PaymentModal({
     }
   };
 
+  const capsuleData = selectedColor ? CAPSULE_MAPPING[selectedColor as keyof typeof CAPSULE_MAPPING] : null;
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <motion.div
@@ -164,67 +169,99 @@ function PaymentModal({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/20 backdrop-blur-md"
       />
       <motion.div
-        initial={{ opacity: 0, scale: 0.92, y: 24 }}
+        initial={{ opacity: 0, scale: 0.85, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.92, y: 24 }}
-        className="relative w-full max-w-sm bg-white/90 backdrop-blur-2xl rounded-3xl shadow-2xl overflow-hidden border border-white/60"
+        exit={{ opacity: 0, scale: 0.85, y: 30 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+        className="relative w-full max-w-xs overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, #fdf6ff 0%, #f0f4ff 50%, #fef9f0 100%)',
+          borderRadius: '2.5rem',
+          boxShadow: '0 8px 40px rgba(180,150,220,0.25)',
+          border: '1px solid rgba(255,255,255,0.8)',
+        }}
       >
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-all"
+          className="absolute top-5 right-5 p-1.5 rounded-full transition-all z-10"
+          style={{ color: '#C0B0D8', background: 'rgba(200,180,230,0.15)' }}
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        <div className="p-8 space-y-6 text-center">
-          {selectedColor && (
-            <div
-              className="mx-auto w-16 h-16 rounded-full border-4 border-white shadow-lg"
-              style={{ background: selectedColor }}
-            />
-          )}
-
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">편지 발송 확인</p>
-            <h2 className="text-2xl font-extrabold text-slate-900 leading-tight">
-              {label}에 편지가<br />도착합니다
-            </h2>
-            <p className="text-sm text-slate-500 mt-2">{deliveryDate}</p>
-            {colorName && (
-              <p className="text-xs text-slate-400 mt-1">편지지 색: {colorName}</p>
+        {/* 캡슐 이미지 영역 */}
+        <div className="flex flex-col items-center pt-12 pb-4 px-8">
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18, delay: 0.1 }}
+            className="mb-4"
+          >
+            {capsuleData ? (
+              <img
+                src={capsuleData.image}
+                alt={capsuleData.text}
+                style={{ width: 120, height: 120, objectFit: 'contain', filter: 'drop-shadow(0 8px 20px rgba(200,160,240,0.4))' }}
+              />
+            ) : (
+              <div style={{ width: 120, height: 120, borderRadius: '50%', background: selectedColor ?? '#E8DFFF', opacity: 0.7 }} />
             )}
-          </div>
+          </motion.div>
 
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-            <p className="text-xs text-slate-500 mb-1">결제 금액</p>
-            <p className="text-3xl font-extrabold text-slate-900">
-              1,000<span className="text-lg font-semibold text-slate-500">원</span>
-            </p>
-            <p className="text-xs text-slate-400 mt-1">1회 단건 결제 · 토스페이</p>
-          </div>
+          <p style={{ fontSize: 11, letterSpacing: '0.2em', color: '#C0A8E0', marginBottom: 8, fontStyle: 'italic' }}>
+            {capsuleData?.text ?? ''}
+          </p>
+          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 400, color: '#4A3F6B', marginBottom: 4, textAlign: 'center', lineHeight: 1.4 }}>
+            {label}에 편지가 도착합니다
+          </h2>
+          <p style={{ fontSize: 13, color: '#8A7AAA', textAlign: 'center', marginBottom: 4 }}>{deliveryDate}</p>
+        </div>
 
+        {/* 결제 금액 */}
+        <div style={{ margin: '0 24px 16px', background: 'rgba(255,255,255,0.6)', borderRadius: 16, padding: '12px 16px', textAlign: 'center', border: '1px solid rgba(200,180,230,0.2)' }}>
+          <p style={{ fontSize: 11, color: '#A090C0', marginBottom: 4 }}>결제 금액</p>
+          <p style={{ fontSize: 28, fontWeight: 800, color: '#4A3F6B' }}>
+            {amount.toLocaleString()}<span style={{ fontSize: 14, fontWeight: 600, color: '#8A7AAA' }}>원</span>
+          </p>
+          <p style={{ fontSize: 11, color: '#B0A0C8', marginTop: 2 }}>1회 단건 결제 · 토스페이</p>
+        </div>
+
+        {/* 버튼 영역 */}
+        <div style={{ padding: '0 24px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
             onClick={handlePayment}
             disabled={isPaying}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold text-base shadow-lg shadow-violet-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{
+              width: '100%', padding: '13px', borderRadius: 99, border: 'none',
+              cursor: isPaying ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700,
+              background: 'linear-gradient(to right, #ffd6e0, #e8d5f5, #d6eeff)',
+              color: '#6A5A9A',
+              transition: 'all .3s',
+              boxShadow: '0 2px 12px rgba(200,160,220,0.3)',
+              opacity: isPaying ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
           >
             {isPaying ? (
               <>
-                <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                <span className="animate-spin inline-block w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full" />
                 결제창 여는 중...
               </>
             ) : (
-              '1,000원 결제하고 보내기'
+              `${amount.toLocaleString()}원 결제하고 보내기`
             )}
           </button>
-
           <button
             onClick={onFreeFallback}
             disabled={isPaying}
-            className="w-full py-3 text-sm text-slate-400 hover:text-slate-600 transition-colors underline underline-offset-2 disabled:opacity-40"
+            style={{
+              width: '100%', padding: '10px', borderRadius: 99, border: 'none',
+              background: 'transparent', cursor: 'pointer', fontSize: 13,
+              color: '#B0A0C8', textDecoration: 'underline', opacity: isPaying ? 0.4 : 1,
+            }}
           >
             3일 후 무료로 보내기
           </button>
@@ -354,9 +391,11 @@ function CapsuleModal({
 
 // ─── 메인 앱 ────────────────────────────────────────
 export default function App() {
+  const navigate = useNavigate();
+  const [anonymousKey, setAnonymousKey] = useState<string | null>(null);
   const [letterContent, setLetterContent] = useState('');
   const [email, setEmail] = useState('');
-  const [deliveryOption, setDeliveryOption] = useState<DeliveryOption>('3days');
+  const [deliveryOption, setDeliveryOption] = useState<DeliveryOption>('1month');
   const [currentQuestion, setCurrentQuestion] = useState(
     () => QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
   );
@@ -381,12 +420,65 @@ export default function App() {
 
   const capsuleProgress = useCapsuleAnimation(isSpinning);
 
+  // ─── 앱인토스 유저 식별키 발급 ──────────────────────
+  useEffect(() => {
+    const fetchAnonymousKey = async () => {
+      try {
+        const key = await getAnonymousKey();
+        setAnonymousKey(key);
+        localStorage.setItem('ftc_anonymous_key', key);
+      } catch (e) {
+        // 앱인토스 외부 환경(일반 웹)에서는 무시
+        console.warn('getAnonymousKey 실패 (앱인토스 환경 아님):', e);
+      }
+    };
+    fetchAnonymousKey();
+  }, []);
+
   useEffect(() => {
     const fetchCount = async () => {
       const { count } = await supabase.from('letters').select('*', { count: 'exact', head: true });
       if (count !== null) setSentCount(count);
     };
     fetchCount();
+  }, []);
+
+  // ─── 앱인토스 뒤로가기 이벤트 ───────────────────────
+  useEffect(() => {
+    const unsubscription = graniteEvent.addEventListener('backEvent', {
+      onEvent: () => {
+        if (letterContent.trim()) {
+          const shouldLeave = window.confirm('작성 중인 편지가 저장되지 않아요. 나가시겠어요?');
+          if (shouldLeave) {
+            navigate(-1);
+          }
+        } else {
+          navigate(-1);
+        }
+      },
+      onError: (error) => {
+        console.error(`뒤로가기 이벤트 오류: ${error}`);
+      },
+    });
+    return () => { unsubscription(); };
+  }, [letterContent, navigate]);
+
+  // ─── 앱인토스 홈 버튼 이벤트 ────────────────────────
+  useEffect(() => {
+    const unsubscribe = graniteEvent.addEventListener('homeEvent', {
+      onEvent: () => {
+        setLetterContent('');
+        setEmail('');
+        setDeliveryOption('1month');
+        setSelectedColor(null);
+        setCapsulePhase('idle');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+      onError: (error) => {
+        console.error(`홈 버튼 이벤트 오류: ${error}`);
+      },
+    });
+    return () => { unsubscribe(); };
   }, []);
 
   useEffect(() => {
@@ -452,7 +544,8 @@ export default function App() {
       scheduled_at: scheduled.toISOString(),
       letter_color: color,
       is_paid: isPaid,
-      amount: isPaid ? 1000 : 0,
+      amount: isPaid ? (option === '1month' ? 1500 : 1000) : 0,
+      anonymous_key: anonymousKey ?? localStorage.getItem('ftc_anonymous_key'),
     }]);
     setIsSending(false);
     if (error) { showToast('편지 저장에 실패했어요. 잠시 후 다시 시도해주세요.', 'error'); return false; }
@@ -502,7 +595,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-slate-50 text-slate-800 font-sans selection:bg-blue-200 selection:text-blue-900">
 
-      <OnboardingModal />
+      <OnboardingModal isOpen={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
 
       <div className="fixed inset-0 z-0 bg-slate-100">
         <iframe
@@ -633,7 +726,7 @@ export default function App() {
                   언제 받을까요?
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['3days', '1week', '1month'] as DeliveryOption[]).map(opt => (
+                  {(['1month', '1week', '3days'] as DeliveryOption[]).map(opt => (
                     <button
                       key={opt}
                       onClick={() => setDeliveryOption(opt)}
@@ -646,19 +739,19 @@ export default function App() {
                       {opt === '3days' && (
                         <span className="flex flex-col items-center gap-0.5">
                           <span>3일 후</span>
-                          
+                          <span className="text-[10px] opacity-70">무료</span>
                         </span>
                       )}
                       {opt === '1week' && (
                         <span className="flex flex-col items-center gap-0.5">
                           <span>1주일 후</span>
-                          
+                          <span className="text-[10px] opacity-70">1,000원</span>
                         </span>
                       )}
                       {opt === '1month' && (
                         <span className="flex flex-col items-center gap-0.5">
                           <span>1달 후</span>
-                          
+                          <span className="text-[10px] opacity-70">1,500원</span>
                         </span>
                       )}
                     </button>
@@ -741,7 +834,7 @@ export default function App() {
           <div className="flex justify-center gap-4 text-xs text-slate-400">
             <a href="/terms" className="hover:text-violet-500 transition-colors">이용약관</a>
             <a href="/privacy" className="hover:text-violet-500 transition-colors">개인정보처리방침</a>
-            <a href="mailto:je@nextstar.kr" className="hover:text-violet-500 transition-colors">문의</a>
+            <button onClick={() => openURL('mailto:je@nextstar.kr')} className="hover:text-violet-500 transition-colors">문의</button>
           </div>
         </footer>
       </div>
@@ -796,49 +889,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* About 모달 */}
-      <AnimatePresence>
-        {isAboutOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAboutOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-white/90 backdrop-blur-2xl border border-white/30 rounded-[2.5rem] shadow-2xl overflow-hidden"
-            >
-              <div className="p-8 md:p-12">
-                <button
-                  onClick={() => setIsAboutOpen(false)}
-                  className="absolute top-6 right-6 p-2 text-slate-500 hover:text-slate-800 hover:bg-white/20 rounded-full transition-all"
-                >
-                  <X size={20} />
-                </button>
-                <div className="space-y-4 text-slate-800 leading-relaxed">
-                  <h2 style={{ fontFamily: "'Dancing Script', cursive", fontSize: '2rem', color: '#CFBCF5', fontWeight: 700 }}>
-                    Future Time Capsule
-                  </h2>
-                  <p className="text-sm text-slate-600">
-                    미래의 나에게 편지를 보내고, 설정한 날짜에 이메일로 받는 서비스예요.
-                    평범한 어느 날, 과거의 내가 보낸 편지를 발견하는 감정 — 그것이 이 서비스의 전부입니다.
-                  </p>
-                  <div className="bg-violet-50 rounded-xl p-4 text-xs text-violet-700 space-y-1">
-                    <p>✦ 3일 후 — 무료</p>
-                    <p>✦ 1주일 후 — 1,000원</p>
-                    <p>✦ 1달 후 — 1,000원</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

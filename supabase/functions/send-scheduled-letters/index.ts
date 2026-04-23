@@ -78,13 +78,20 @@ Deno.serve(async (req) => {
     for (const letter of pendingLetters) {
       const writtenAt = formatKoreanDateTime(letter.created_at ?? letter.scheduled_at);
       const emailText = [
-        "안녕하세요.",
+        "안녕하세요. 퓨쳐타임캡슐 시간배송원입니다.",
         "과거의 당신이 미래의 당신에게 편지를 남겼어요.",
         "",
         `작성일: ${writtenAt}`,
         "",
         "[편지 원문]",
         letter.content,
+        "",
+        "──────────────────────────",
+        "토스 앱에서 편지를 열어보세요.",
+        `https://toss.im/_m/future-timecapsule?deep_link_value=intoss://future-timecapsule/letter/${letter.id}`,
+        "",
+        "토스 앱이 없다면 아래 링크로 열어보세요.",
+        `https://future-time-capsule.vercel.app/letter/${letter.id}`,
       ].join("\n");
 
       const resendResponse = await fetch("https://api.resend.com/emails", {
@@ -96,7 +103,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: "Future Time Capsule <futuretimecapsule@nextstar.kr>",
           to: [letter.email],
-          subject: "과거의 당신이 편지를 보냈어요",
+          subject: "과거의 당신이 편지를 보냈어요 ✉",
           text: emailText,
         }),
       });
