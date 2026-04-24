@@ -479,7 +479,7 @@ export default function App() {
   const [anonymousKey, setAnonymousKey] = useState<string | null>(null);
   const [letterContent, setLetterContent] = useState('');
   const [email, setEmail] = useState('');
-  const [deliveryOption, setDeliveryOption] = useState<DeliveryOption>('1month');
+  const [deliveryOption, setDeliveryOption] = useState<DeliveryOption>('3days');
   const [currentQuestion, setCurrentQuestion] = useState(
     () => QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)]
   );
@@ -891,7 +891,7 @@ export default function App() {
                   언제 받을까요?
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['1month', '1week', '3days'] as DeliveryOption[]).map(opt => (
+                  {(['3days', '1week', '1month'] as DeliveryOption[]).map(opt => (
                     <button
                       key={opt}
                       onClick={() => setDeliveryOption(opt)}
