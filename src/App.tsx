@@ -179,6 +179,7 @@ function PaymentModal({
   selectedColor,
   onClose,
   onFreeFallback,
+  onRewardFallback,
   onPaid,
   onProcessGrant,
 }: {
@@ -187,6 +188,7 @@ function PaymentModal({
   selectedColor: string | null;
   onClose: () => void;
   onFreeFallback: () => void;
+  onRewardFallback: () => void;
   onPaid: () => void;
   onProcessGrant: (orderId: string) => Promise<boolean>;
 }) {
@@ -339,7 +341,7 @@ function PaymentModal({
             )}
           </button>
           <button
-            onClick={onFreeFallback}
+            onClick={onRewardFallback}
             disabled={isPaying}
             style={{
               width: '100%', padding: '10px', borderRadius: 99, border: 'none',
@@ -347,7 +349,7 @@ function PaymentModal({
               color: '#B0A0C8', textDecoration: 'underline', opacity: isPaying ? 0.4 : 1,
             }}
           >
-            3일 후 무료로 보내기
+            📺 광고 보고 3일 후 무료로 보내기
           </button>
         </div>
       </motion.div>
@@ -746,6 +748,20 @@ export default function App() {
     if (selectedColor) await saveLetter(selectedColor, false, '3days');
   };
 
+  const handleRewardFallback = async () => {
+    setShowPayment(false);
+    if (!isRewardAdLoaded) {
+      // 광고 미로드 시 그냥 3일 무료로 fallback
+      setDeliveryOption('3days');
+      if (selectedColor) await saveLetter(selectedColor, false, '3days');
+      return;
+    }
+    showRewardAd(async () => {
+      setDeliveryOption('3days');
+      if (selectedColor) await saveLetter(selectedColor, false, '3days');
+    });
+  };
+
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, visible: true, type });
     setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 4000);
@@ -1011,6 +1027,7 @@ export default function App() {
               setCapsulePhase('idle');
             }}
             onFreeFallback={handleFreeFallback}
+            onRewardFallback={handleRewardFallback}
             onPaid={handlePaid}
             onProcessGrant={handleProcessGrant}
           />
