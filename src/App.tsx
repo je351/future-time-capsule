@@ -732,10 +732,11 @@ export default function App() {
 
   // 리워드 광고 보고 무료 발송
   const handleRewardSend = async () => {
+    if (!validate()) return;
     if (!isRewardAdLoaded) return;
     const color = await spinAndSelect();
     showRewardAd(async () => {
-      await saveLetter(color, false, deliveryOption);
+      await saveLetter(color, false, '3days');
     });
   };
 
@@ -944,8 +945,8 @@ export default function App() {
               </div>
 
               <button
-                onClick={handleSend}
-                disabled={isSending || capsulePhase === 'spinning'}
+                onClick={deliveryOption === '3days' ? handleRewardSend : handleSend}
+                disabled={isSending || capsulePhase === 'spinning' || (deliveryOption === '3days' && !isRewardAdLoaded)}
                 className="w-full bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-violet-500/30 transform transition-all duration-200 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {capsulePhase === 'spinning' ? (
@@ -953,24 +954,16 @@ export default function App() {
                     <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
                     캡슐 추첨 중...
                   </span>
+                ) : isSending ? (
+                  <span>보내는 중...</span>
+                ) : deliveryOption === '3days' ? (
+                  <span>📺 광고 보고 미래로 발송</span>
+                ) : deliveryOption === '1week' ? (
+                  <span>1,000원 · 1주일 후 도착 ✈️</span>
                 ) : (
-                  <>
-                    <span>{isSending ? '보내는 중...' : '미래로 보내기'}</span>
-                    <Send size={16} className="group-hover:translate-x-1 transition-transform" />
-                  </>
+                  <span>1,500원 · 1달 후 도착 ✈️</span>
                 )}
               </button>
-
-              {/* 리워드 광고 버튼 — 1주일/1달 유료 옵션일 때만 표시 */}
-              {isPaidOption && isRewardAdLoaded && (
-                <button
-                  onClick={handleRewardSend}
-                  disabled={isSending || capsulePhase === 'spinning'}
-                  className="w-full bg-white border border-violet-200 text-violet-600 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-violet-50 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
-                >
-                  📺 광고 보고 미래로 발송
-                </button>
-              )}
 
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex gap-3 items-start">
                 <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
