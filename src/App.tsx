@@ -990,8 +990,8 @@ export default function App() {
             &copy; {new Date().getFullYear()} Future Time Capsule. All rights reserved.
           </p>
           <div className="flex justify-center gap-4 text-xs text-slate-400">
-            <a href="/terms" className="hover:text-violet-500 transition-colors">이용약관</a>
-            <a href="/privacy" className="hover:text-violet-500 transition-colors">개인정보처리방침</a>
+            <a href="/terms" onClick={(e) => { e.preventDefault(); navigate('/terms'); }} className="hover:text-violet-500 transition-colors">이용약관</a>
+            <a href="/privacy" onClick={(e) => { e.preventDefault(); navigate('/privacy'); }} className="hover:text-violet-500 transition-colors">개인정보처리방침</a>
             <button onClick={async () => { try { const { openURL } = await import('@apps-in-toss/web-framework'); openURL('mailto:je@nextstar.kr'); } catch { window.location.href = 'mailto:je@nextstar.kr'; } }} className="hover:text-violet-500 transition-colors">문의</button>
           </div>
         </footer>
