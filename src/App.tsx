@@ -28,6 +28,88 @@ declare global {
 // 앱인토스 콘솔에서 발급받은 Client Key로 교체하세요
 const TOSSPAY_CLIENT_KEY = 'test_ck_E92LAa5PVbq0njGWZ9kB37YmpXyJ'; // TODO: 앱인토스 콘솔 → 수익화 → 토스페이 Client Key
 
+// 광고 그룹 ID
+const BANNER_AD_ID = 'ait.v2.live.efc10fc100e94b3c';
+const REWARD_AD_ID = 'ait.v2.live.9794e94a71434d48';
+
+// 배너 광고 훅
+function useTossBanner() {
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const { TossAds } = await import('@apps-in-toss/web-framework');
+        if (!TossAds.initialize.isSupported()) return;
+        TossAds.initialize({
+          callbacks: {
+            onInitialized: () => setIsInitialized(true),
+            onInitializationFailed: (e) => console.error('TossAds 초기화 실패:', e),
+          },
+        });
+      } catch { /* 앱인토스 외부 환경 무시 */ }
+    };
+    init();
+  }, []);
+
+  const attachBanner = async (element: HTMLElement) => {
+    try {
+      const { TossAds } = await import('@apps-in-toss/web-framework');
+      if (!isInitialized) return undefined;
+      return TossAds.attachBanner(BANNER_AD_ID, element, {
+        theme: 'auto',
+        tone: 'blackAndWhite',
+        variant: 'expanded',
+      });
+    } catch { return undefined; }
+  };
+
+  return { isInitialized, attachBanner };
+}
+
+// 리워드 광고 훅
+function useRewardAd() {
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+
+  const loadAd = async () => {
+    try {
+      const { loadFullScreenAd } = await import('@apps-in-toss/web-framework');
+      if (!loadFullScreenAd.isSupported()) return;
+      loadFullScreenAd({
+        options: { adGroupId: REWARD_AD_ID },
+        onEvent: (event) => { if (event.type === 'loaded') setIsAdLoaded(true); },
+        onError: (e) => console.error('리워드 광고 로드 실패:', e),
+      });
+    } catch { /* 앱인토스 외부 환경 무시 */ }
+  };
+
+  useEffect(() => { loadAd(); }, []);
+
+  const showRewardAd = (onRewarded: () => void): Promise<boolean> => {
+    return new Promise(async (resolve) => {
+      try {
+        const { showFullScreenAd } = await import('@apps-in-toss/web-framework');
+        showFullScreenAd({
+          options: { adGroupId: REWARD_AD_ID },
+          onEvent: (event) => {
+            if (event.type === 'userEarnedReward') {
+              onRewarded();
+              resolve(true);
+            }
+            if (event.type === 'dismissed') {
+              setIsAdLoaded(false);
+              loadAd(); // 다음 광고 미리 로드
+            }
+          },
+          onError: (e) => { console.error('리워드 광고 표시 실패:', e); resolve(false); },
+        });
+      } catch { resolve(false); }
+    });
+  };
+
+  return { isAdLoaded, showRewardAd };
+}
+
 const QUESTIONS = [
   "지금 포기하고 싶은 게 있다면, 그래도 계속하는 이유가 뭔가요?",
   "1년 후의 내가 오늘을 돌아본다면, 뭐라고 할 것 같아요?",
@@ -98,6 +180,7 @@ function PaymentModal({
   onClose,
   onFreeFallback,
   onPaid,
+  onProcessGrant,
 }: {
   deliveryOption: DeliveryOption;
   deliveryDate: string;
@@ -105,6 +188,7 @@ function PaymentModal({
   onClose: () => void;
   onFreeFallback: () => void;
   onPaid: () => void;
+  onProcessGrant: (orderId: string) => Promise<boolean>;
 }) {
   const [isPaying, setIsPaying] = useState(false);
   const label = deliveryOption === '1week' ? '1주일 후' : '1달 후';
@@ -116,49 +200,47 @@ function PaymentModal({
   const handlePayment = async () => {
     setIsPaying(true);
     try {
-      const orderId = `ftc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const { IAP } = await import('@apps-in-toss/web-framework');
 
-      // ── 앱인토스 미니앱 환경: TossSDK 브릿지 사용 ──
-      if (window.TossSDK) {
-        await window.TossSDK.payment.request({
-          amount,
-          orderId,
-          orderName: `Future Time Capsule — ${label} 편지 발송`,
-          customerName: '편지 작성자',
-        });
-        setIsPaying(false);
-        onPaid();
-        return;
-      }
+      // SKU: 배송 옵션에 따라 콘솔에서 발급받은 SKU로 교체하세요
+      const sku = deliveryOption === '1month'
+        ? 'ait.0000028145.715688cc.fbe373d743.7005440944'
+        : 'ait.0000028145.07804310.5b0a0738b5.7005396815';
 
-      // ── 일반 웹 환경 (개발/테스트): TossPayments SDK ──
-      if (!window.TossPayments) {
-        throw new Error('TossPayments SDK가 로드되지 않았습니다.');
-      }
-      const tossPayments = window.TossPayments(TOSSPAY_CLIENT_KEY);
-      await tossPayments.requestPayment('카드', {
-        amount,
-        orderId,
-        orderName: `Future Time Capsule — ${label} 편지 발송`,
-        customerName: '편지 작성자',
-        successUrl: `${window.location.origin}/?payment=success`,
-        failUrl: `${window.location.origin}/?payment=fail`,
+      const cleanup = IAP.createOneTimePurchaseOrder({
+        options: {
+          sku,
+          processProductGrant: async ({ orderId }) => {
+            // 결제 성공 → 편지 저장 (상품 지급 로직)
+            console.log('상품 지급 시작:', orderId);
+            const success = await onProcessGrant(orderId);
+            return success;
+          },
+        },
+        onEvent: (event) => {
+          if (event.type === 'success') {
+            cleanup();
+            setIsPaying(false);
+            onPaid();
+          }
+        },
+        onError: (error: unknown) => {
+          cleanup();
+          setIsPaying(false);
+          const err = error as { code?: string; message?: string };
+          if (
+            err?.code === 'USER_CANCEL' ||
+            err?.message?.toLowerCase().includes('cancel') ||
+            err?.message?.toLowerCase().includes('취소')
+          ) return;
+          console.error('결제 실패:', error);
+          alert('결제에 실패했어요. 다시 시도해주세요.');
+        },
       });
-
-      // requestPayment는 리다이렉트 방식이므로 아래는 팝업 방식일 때만 실행됨
+    } catch (e) {
       setIsPaying(false);
-      onPaid();
-    } catch (e: unknown) {
-      setIsPaying(false);
-      const err = e as { code?: string; message?: string };
-      // 사용자가 직접 취소한 경우 — 에러 표시 없이 조용히 닫기
-      if (
-        err?.code === 'USER_CANCEL' ||
-        err?.message?.toLowerCase().includes('cancel') ||
-        err?.message?.toLowerCase().includes('취소')
-      ) return;
-      console.error('결제 실패:', e);
-      alert('결제에 실패했어요. 다시 시도해주세요.');
+      console.error('IAP 초기화 실패:', e);
+      alert('결제를 시작할 수 없어요. 다시 시도해주세요.');
     }
   };
 
@@ -413,6 +495,11 @@ export default function App() {
   const [showCapsuleModal, setShowCapsuleModal] = useState(false);
   const [modalData, setModalData] = useState<{ color: string; scheduledAt: Date } | null>(null);
 
+  // 광고 훅
+  const { isInitialized: isBannerReady, attachBanner } = useTossBanner();
+  const { isAdLoaded: isRewardAdLoaded, showRewardAd } = useRewardAd();
+  const bannerRef = useRef<HTMLDivElement>(null);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const [editorSize, setEditorSize] = useState({ w: 600, h: 400 });
 
@@ -572,6 +659,9 @@ export default function App() {
   const handleSend = async () => {
     if (!validate()) return;
     const color = await spinAndSelect();
+    // 미결 주문 복원 대비 — 색상/옵션 미리 저장
+    localStorage.setItem('ftc_pending_color', color);
+    localStorage.setItem('ftc_pending_option', deliveryOption);
     if (deliveryOption === '3days') {
       await saveLetter(color, false, '3days');
     } else {
@@ -583,6 +673,70 @@ export default function App() {
   const handlePaid = async () => {
     setShowPayment(false);
     if (selectedColor) await saveLetter(selectedColor, true, deliveryOption);
+  };
+
+  // IAP processProductGrant 콜백용 — orderId 기록 후 편지 저장
+  const handleProcessGrant = async (orderId: string): Promise<boolean> => {
+    try {
+      if (!selectedColor) return false;
+      // orderId를 로컬에 저장 (미결 주문 복원 대비)
+      localStorage.setItem('ftc_pending_orderId', orderId);
+      const success = await saveLetter(selectedColor, true, deliveryOption);
+      if (success) localStorage.removeItem('ftc_pending_orderId');
+      return !!success;
+    } catch (e) {
+      console.error('상품 지급 실패:', e);
+      return false;
+    }
+  };
+
+  // 앱 시작 시 미결 주문 복원
+  useEffect(() => {
+    const restorePendingOrders = async () => {
+      try {
+        const { IAP } = await import('@apps-in-toss/web-framework');
+        const result = await IAP.getPendingOrders();
+        if (!result?.orders?.length) return;
+        for (const order of result.orders) {
+          // 이미 처리된 orderId면 스킵
+          const stored = localStorage.getItem('ftc_pending_orderId');
+          if (stored !== order.orderId) continue;
+          // 미결 주문 → 편지 저장 재시도
+          const color = localStorage.getItem('ftc_pending_color') ?? '#E8DFFF';
+          const option = (localStorage.getItem('ftc_pending_option') ?? '1month') as DeliveryOption;
+          setSelectedColor(color);
+          setDeliveryOption(option);
+          const success = await saveLetter(color, true, option);
+          if (success) {
+            await IAP.completeProductGrant({ params: { orderId: order.orderId } });
+            localStorage.removeItem('ftc_pending_orderId');
+            localStorage.removeItem('ftc_pending_color');
+            localStorage.removeItem('ftc_pending_option');
+          }
+        }
+      } catch {
+        // 앱인토스 외부 환경에서는 무시
+      }
+    };
+    restorePendingOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 배너 광고 부착
+  useEffect(() => {
+    if (!isBannerReady || !bannerRef.current) return;
+    let attached: { destroy: () => void } | undefined;
+    attachBanner(bannerRef.current).then((result) => { attached = result; });
+    return () => { attached?.destroy(); };
+  }, [isBannerReady]);
+
+  // 리워드 광고 보고 무료 발송
+  const handleRewardSend = async () => {
+    if (!isRewardAdLoaded) return;
+    const color = await spinAndSelect();
+    showRewardAd(async () => {
+      await saveLetter(color, false, deliveryOption);
+    });
   };
 
   const handleFreeFallback = async () => {
@@ -807,6 +961,17 @@ export default function App() {
                 )}
               </button>
 
+              {/* 리워드 광고 버튼 — 1주일/1달 유료 옵션일 때만 표시 */}
+              {isPaidOption && isRewardAdLoaded && (
+                <button
+                  onClick={handleRewardSend}
+                  disabled={isSending || capsulePhase === 'spinning'}
+                  className="w-full bg-white border border-violet-200 text-violet-600 font-semibold py-3 rounded-xl flex items-center justify-center gap-2 hover:bg-violet-50 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+                >
+                  📺 광고 보고 미래로 발송
+                </button>
+              )}
+
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex gap-3 items-start">
                 <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-500 leading-relaxed">
@@ -821,6 +986,11 @@ export default function App() {
             </div>
           </div>
         </main>
+
+        {/* 배너 광고 — 하단 고정 */}
+        {isBannerReady && (
+          <div ref={bannerRef} style={{ width: '100%', height: '96px' }} />
+        )}
 
         <footer className="mt-12 py-8 text-center border-t border-slate-200/50 space-y-4">
           <p className="text-xs text-slate-400">
@@ -849,6 +1019,7 @@ export default function App() {
             }}
             onFreeFallback={handleFreeFallback}
             onPaid={handlePaid}
+            onProcessGrant={handleProcessGrant}
           />
         )}
       </AnimatePresence>
