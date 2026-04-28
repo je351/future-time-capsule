@@ -186,7 +186,7 @@ function LetterCard({
             style={{
               padding: '12px 28px', borderRadius: 99, border: 'none',
               cursor: 'pointer', fontSize: 14, fontWeight: 500,
-              background: 'linear-gradient(to right, #FFB8D9, #E0C3FC, #B8E0FF)',
+              background: 'linear-gradient(to right, #ffd6e0, #e8d5f5, #fff5cc)',
               color: '#4A3F6B', fontFamily: 'Georgia, serif', fontStyle: 'italic',
               transition: 'all .3s', 
               boxShadow: '0 4px 16px rgba(200,160,220,0.25)',
@@ -288,7 +288,7 @@ function ShareCardForCapture({
           {date}
         </p>
         
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: 32 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'flex-start', marginBottom: 32 }}>
           <h2 style={{
             fontFamily: 'Georgia, serif', fontSize: 56,
             fontStyle: 'italic', fontWeight: 400,
@@ -297,10 +297,10 @@ function ShareCardForCapture({
             Dear,
           </h2>
           <img src={bubbleImg} alt="" crossOrigin="anonymous" style={{
-            position: 'absolute', top: 14, right: -70, width: 60, height: 60, opacity: 0.8,
+            width: 60, height: 60, opacity: 0.8, marginLeft: 16, marginTop: 14,
           }} />
           <img src={bubbleImg} alt="" crossOrigin="anonymous" style={{
-            position: 'absolute', top: 6, right: -100, width: 30, height: 30, opacity: 0.8,
+            width: 30, height: 30, opacity: 0.8, marginLeft: -8, marginTop: 6,
           }} />
         </div>
         
