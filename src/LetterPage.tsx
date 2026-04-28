@@ -217,24 +217,6 @@ function LetterCard({
           >
             {isSaving ? '간직하는 중...' : '간직하기'}
           </button>
-
-          {/* Secondary: 공유하기 (라인) */}
-          <button
-            onClick={handleShare}
-            style={{
-              padding: '11px 22px', borderRadius: 99,
-              border: '1px solid rgba(180,150,220,0.4)',
-              background: 'transparent', color: '#6B5EA7',
-              fontSize: 13, fontFamily: 'Georgia, serif', fontStyle: 'italic',
-              cursor: 'pointer', 
-              transition: 'all .2s',
-              animation: 'fadeIn .6s ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(180,150,220,0.08)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-          >
-            공유하기
-          </button>
         </div>
       )}
     </div>
