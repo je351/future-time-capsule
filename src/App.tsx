@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
 
@@ -478,7 +478,6 @@ function CapsuleModal({
 // ─── 메인 앱 ────────────────────────────────────────
 export default function App() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [anonymousKey, setAnonymousKey] = useState<string | null>(null);
   const [letterContent, setLetterContent] = useState('');
   const [email, setEmail] = useState('');
@@ -535,57 +534,20 @@ export default function App() {
     fetchCount();
   }, []);
 
-  // ─── 앱인토스 뒤로가기 이벤트 ───────────────────────
-  // 홈('/')에서 뒤로가기 → 미니앱 종료 (closeWindow)
-  // 모달이 열려있으면 → 모달 닫기
-  // 다른 페이지(/terms, /privacy 등)에서 → navigate(-1)
-  useEffect(() => {
-    let unsubscription: (() => void) | null = null;
-    const setup = async () => {
-      try {
-        const { graniteEvent, closeWindow } = await import('@apps-in-toss/web-framework');
-        unsubscription = graniteEvent.addEventListener('backEvent', {
-          onEvent: () => {
-            // 1. 모달이 열려있으면 모달부터 닫기
-            if (showPayment) {
-              setShowPayment(false);
-              setSelectedColor(null);
-              setCapsulePhase('idle');
-              return;
-            }
-            if (showCapsuleModal) {
-              setShowCapsuleModal(false);
-              setModalData(null);
-              return;
-            }
-            if (isAboutOpen) {
-              setIsAboutOpen(false);
-              return;
-            }
-
-            // 2. 홈('/')에서는 미니앱 종료
-            if (location.pathname === '/' || location.pathname === '') {
-              if (letterContent.trim()) {
-                const shouldLeave = window.confirm('작성 중인 편지가 저장되지 않아요. 나가시겠어요?');
-                if (shouldLeave) {
-                  try { closeWindow(); } catch {}
-                }
-              } else {
-                try { closeWindow(); } catch {}
-              }
-              return;
-            }
-
-            // 3. 그 외 페이지(/terms, /privacy 등)는 이전 페이지로
-            navigate(-1);
-          },
-          onError: () => {},
-        });
-      } catch {}
-    };
-    setup();
-    return () => { if (unsubscription) unsubscription(); };
-  }, [letterContent, navigate, location.pathname, showPayment, showCapsuleModal, isAboutOpen]);
+  // ─── 앱인토스 뒤로가기 처리 ─────────────────────────
+  //
+  // ⚠️ 중요: backEvent 리스너를 등록하면 토스의 기본 동작(첫 화면 → 종료 확인 모달 →
+  // 종료)이 차단됩니다. 그러면 심사에서 "최초 화면에서 미니앱이 종료되지 않아요" 사유로 반려됩니다.
+  //
+  // 토스 공식 답변(Dylan, 2026-03-18):
+  // "별도의 코드를 작성하지 않으셔도 최초 화면에서 뒤로가기 클릭 시 종료 확인을 묻는 창이 뜨게
+  //  되어있습니다."
+  //
+  // 따라서 backEvent 리스너는 등록하지 않습니다. 토스가 히스토리 스택을 보고 알아서 처리합니다.
+  // - 첫 화면(/) → 뒤로가기 → "종료할까요?" 모달 → 종료 ✅
+  // - 다른 페이지(/terms 등) → 뒤로가기 → 이전 페이지로 ✅
+  //
+  // 편지 작성 중 보호는 beforeunload(웹) 정도로 처리하거나, 향후 필요 시 다시 검토.
 
   // ─── 앱인토스 홈 버튼 이벤트 ────────────────────────
   useEffect(() => {
