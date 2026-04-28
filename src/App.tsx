@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Calendar, Mail, X, RefreshCw, Info, Clock } from 'lucide-react';
 
@@ -478,6 +478,7 @@ function CapsuleModal({
 // ─── 메인 앱 ────────────────────────────────────────
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [anonymousKey, setAnonymousKey] = useState<string | null>(null);
   const [letterContent, setLetterContent] = useState('');
   const [email, setEmail] = useState('');
@@ -535,19 +536,48 @@ export default function App() {
   }, []);
 
   // ─── 앱인토스 뒤로가기 이벤트 ───────────────────────
+  // 홈('/')에서 뒤로가기 → 미니앱 종료 (closeWindow)
+  // 모달이 열려있으면 → 모달 닫기
+  // 다른 페이지(/terms, /privacy 등)에서 → navigate(-1)
   useEffect(() => {
     let unsubscription: (() => void) | null = null;
     const setup = async () => {
       try {
-        const { graniteEvent } = await import('@apps-in-toss/web-framework');
+        const { graniteEvent, closeWindow } = await import('@apps-in-toss/web-framework');
         unsubscription = graniteEvent.addEventListener('backEvent', {
           onEvent: () => {
-            if (letterContent.trim()) {
-              const shouldLeave = window.confirm('작성 중인 편지가 저장되지 않아요. 나가시겠어요?');
-              if (shouldLeave) navigate(-1);
-            } else {
-              navigate(-1);
+            // 1. 모달이 열려있으면 모달부터 닫기
+            if (showPayment) {
+              setShowPayment(false);
+              setSelectedColor(null);
+              setCapsulePhase('idle');
+              return;
             }
+            if (showCapsuleModal) {
+              setShowCapsuleModal(false);
+              setModalData(null);
+              return;
+            }
+            if (isAboutOpen) {
+              setIsAboutOpen(false);
+              return;
+            }
+
+            // 2. 홈('/')에서는 미니앱 종료
+            if (location.pathname === '/' || location.pathname === '') {
+              if (letterContent.trim()) {
+                const shouldLeave = window.confirm('작성 중인 편지가 저장되지 않아요. 나가시겠어요?');
+                if (shouldLeave) {
+                  try { closeWindow(); } catch {}
+                }
+              } else {
+                try { closeWindow(); } catch {}
+              }
+              return;
+            }
+
+            // 3. 그 외 페이지(/terms, /privacy 등)는 이전 페이지로
+            navigate(-1);
           },
           onError: () => {},
         });
@@ -555,7 +585,7 @@ export default function App() {
     };
     setup();
     return () => { if (unsubscription) unsubscription(); };
-  }, [letterContent, navigate]);
+  }, [letterContent, navigate, location.pathname, showPayment, showCapsuleModal, isAboutOpen]);
 
   // ─── 앱인토스 홈 버튼 이벤트 ────────────────────────
   useEffect(() => {
