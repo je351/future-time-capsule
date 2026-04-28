@@ -328,12 +328,13 @@ function ShareCardForCapture({
       {/* 하단 워터마크 */}
       <div style={{ textAlign: 'center' }}>
         <p style={{
-          fontSize: 18, fontStyle: 'italic',
-          color: 'rgba(45,43,107,0.4)',
+          fontFamily: 'Georgia, serif',
+          fontSize: 22, fontStyle: 'italic',
+          color: 'rgba(45,43,107,0.5)',
           margin: 0,
           letterSpacing: '.05em',
         }}>
-          — 미래의 나에게서
+          Dear, Me
         </p>
       </div>
     </div>
