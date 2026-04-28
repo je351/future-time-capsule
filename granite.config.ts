@@ -3,7 +3,7 @@ import { defineConfig } from '@apps-in-toss/web-framework/config';
 export default defineConfig({
   appName: 'future-timecapsule',
   brand: {
-    displayName: '퓨처타임캡슐',
+    displayName: '퓨쳐타임캡슐',
     primaryColor: '#8B5CF6',
     icon: 'https://static.toss.im/appsintoss/35001/2b5b1fa2-a216-473f-9996-db1b884f5c93.png', // 앱인토스 콘솔 → 앱 정보 → 아이콘 이미지 우클릭 → 링크 복사 후 넣어주세요
   },

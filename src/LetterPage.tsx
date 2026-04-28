@@ -32,8 +32,28 @@ function getBubbleImage(letterColor: string | null): string {
 function isInToss(): boolean {
   if (typeof window === 'undefined') return false;
   const ua = window.navigator.userAgent || '';
-  // 토스 in-app browser는 UA에 'toss' 포함
   return /toss/i.test(ua) || !!(window as any).TossAppBridge || !!(window as any).intoss;
+}
+
+// 150자 발췌 (마침표/쉼표 우선으로 자연스럽게 끊기)
+function getExcerpt(content: string, maxLength: number = 150): { text: string; isExcerpted: boolean } {
+  if (content.length <= maxLength) {
+    return { text: content, isExcerpted: false };
+  }
+
+  // 150자 근처에서 마침표/쉼표/줄바꿈 찾기 (130~150자 범위)
+  const searchRange = content.slice(130, maxLength);
+  const punctuationMatches = [...searchRange.matchAll(/[.,。、!?\n]/g)];
+  
+  if (punctuationMatches.length > 0) {
+    // 가장 마지막 구두점에서 자르기
+    const lastMatch = punctuationMatches[punctuationMatches.length - 1];
+    const cutPoint = 130 + (lastMatch.index ?? 0) + 1;
+    return { text: content.slice(0, cutPoint).trim() + '…', isExcerpted: true };
+  }
+
+  // 구두점 없으면 그냥 150자에서 자름
+  return { text: content.slice(0, maxLength).trim() + '…', isExcerpted: true };
 }
 
 // ── 캡슐 ─────────────────────────────────────────
@@ -104,7 +124,7 @@ function GlassCapsule({ onClick, disabled }: { onClick: () => void; disabled?: b
   );
 }
 
-// ── 편지 카드 ─────────────────────────────────────
+// ── 편지 카드 (실제 표시용) ─────────────────────────
 function LetterCard({
   content, date, showDate, handleSave, handleShare, navigate, isSaving, letterColor,
 }: {
@@ -114,7 +134,7 @@ function LetterCard({
 }) {
   const bubbleImg = getBubbleImage(letterColor);
   return (
-    <div className="relative w-full mx-auto" style={{ padding: '48px 0', height: 'auto', maxWidth: '800px' }}>
+    <div style={{ padding: '48px 0', height: 'auto', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
       {showDate && (
         <p style={{
           fontSize: 13, fontStyle: 'italic', color: '#2D2B6B',
@@ -156,58 +176,165 @@ function LetterCard({
         </p>
       </div>
 
-      {/* 버튼들 */}
-      <div style={{ display: 'flex', gap: '12px', marginTop: 20, flexWrap: 'wrap' }}>
-        {/* Save 버튼 */}
-        {showDate && (
+      {/* 버튼 영역 */}
+      {showDate && (
+        <div style={{ display: 'flex', gap: '10px', marginTop: 32, flexWrap: 'wrap', alignItems: 'center' }}>
+          
+          {/* Primary: 미래의 나에게 편지 쓰기 (그라데이션) */}
+          <button
+            onClick={() => navigate('/')}
+            style={{
+              padding: '12px 28px', borderRadius: 99, border: 'none',
+              cursor: 'pointer', fontSize: 14, fontWeight: 500,
+              background: 'linear-gradient(to right, #FFB8D9, #E0C3FC, #B8E0FF)',
+              color: '#4A3F6B', fontFamily: 'Georgia, serif', fontStyle: 'italic',
+              transition: 'all .3s', 
+              boxShadow: '0 4px 16px rgba(200,160,220,0.25)',
+              animation: 'fadeIn .6s ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(200,160,220,0.35)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(200,160,220,0.25)'; }}
+          >
+            미래의 나에게 편지 쓰기 →
+          </button>
+
+          {/* Secondary: 간직하기 (라인) */}
           <button
             onClick={handleSave}
             disabled={isSaving}
             style={{
-              padding: '8px 28px', borderRadius: 99, border: 'none',
-              cursor: isSaving ? 'wait' : 'pointer', fontSize: 13, fontWeight: 500,
-              background: 'linear-gradient(to right, #ffd6e0, #e8d5f5, #fff5cc)',
-              color: '#888', fontFamily: 'Georgia, serif',
-              transition: 'all .3s', opacity: isSaving ? .6 : 1,
+              padding: '11px 22px', borderRadius: 99,
+              border: '1px solid rgba(180,150,220,0.4)',
+              background: 'transparent', color: '#6B5EA7',
+              fontSize: 13, fontFamily: 'Georgia, serif', fontStyle: 'italic',
+              cursor: isSaving ? 'wait' : 'pointer', 
+              transition: 'all .2s',
+              opacity: isSaving ? 0.6 : 1,
               animation: 'fadeIn .6s ease',
             }}
+            onMouseEnter={e => { if (!isSaving) e.currentTarget.style.background = 'rgba(180,150,220,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            {isSaving ? '저장 중...' : '이미지 저장'}
+            {isSaving ? '간직하는 중...' : '간직하기'}
           </button>
-        )}
 
-        {/* 공유하기 버튼 */}
-        {showDate && (
+          {/* Secondary: 공유하기 (라인) */}
           <button
             onClick={handleShare}
             style={{
-              padding: '8px 28px', borderRadius: 99, border: 'none',
-              cursor: 'pointer', fontSize: 13, fontWeight: 500,
-              background: 'linear-gradient(to right, #d6e8ff, #e8d5f5, #ffe4f0)',
-              color: '#888', fontFamily: 'Georgia, serif',
-              transition: 'all .3s',
+              padding: '11px 22px', borderRadius: 99,
+              border: '1px solid rgba(180,150,220,0.4)',
+              background: 'transparent', color: '#6B5EA7',
+              fontSize: 13, fontFamily: 'Georgia, serif', fontStyle: 'italic',
+              cursor: 'pointer', 
+              transition: 'all .2s',
               animation: 'fadeIn .6s ease',
             }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(180,150,220,0.08)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
             공유하기
           </button>
-        )}
+        </div>
+      )}
+    </div>
+  );
+}
 
-        {/* 새 편지 버튼 */}
-        <button
-          onClick={() => navigate('/')}
-          style={{
-            padding: '10px 24px', borderRadius: 99,
-            border: '1px solid rgba(180,150,220,0.3)',
-            background: 'transparent', color: '#6B5EA7',
-            fontSize: 15, fontFamily: 'Georgia, serif', fontStyle: 'italic',
-            cursor: 'pointer', transition: 'all .2s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(180,150,220,0.08)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-        >
-          미래의 나에게 편지 쓰기 →
-        </button>
+// ── 1080×1080 공유 카드 (PNG 저장용 숨김 컴포넌트) ─────────
+function ShareCardForCapture({
+  content, date, letterColor, isExcerpted,
+}: {
+  content: string; date: string; letterColor: string | null; isExcerpted: boolean;
+}) {
+  const bubbleImg = getBubbleImage(letterColor);
+  return (
+    <div
+      id="share-card-capture"
+      style={{
+        position: 'fixed',
+        top: '-9999px',
+        left: '-9999px',
+        width: '1080px',
+        height: '1080px',
+        background: '#E2E7F7',
+        padding: '100px 100px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        fontFamily: 'Georgia, serif',
+      }}
+    >
+      {/* 상단 타이틀 */}
+      <div style={{ textAlign: 'center' }}>
+        <h1 style={{
+          fontFamily: "'Caveat', cursive, Georgia, serif",
+          fontSize: 48, fontWeight: 400,
+          color: 'rgba(160,120,210,0.9)',
+          letterSpacing: '.02em',
+          margin: 0,
+        }}>
+          Future Time Capsule
+        </h1>
+      </div>
+
+      {/* 편지 본문 영역 */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 0' }}>
+        <p style={{
+          fontSize: 24, fontStyle: 'italic', color: '#2D2B6B',
+          margin: '0 0 24px',
+        }}>
+          {date}
+        </p>
+        
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: 32 }}>
+          <h2 style={{
+            fontFamily: 'Georgia, serif', fontSize: 56,
+            fontStyle: 'italic', fontWeight: 400,
+            color: '#4A3F6B', margin: 0,
+          }}>
+            Dear,
+          </h2>
+          <img src={bubbleImg} alt="" crossOrigin="anonymous" style={{
+            position: 'absolute', top: 14, right: -70, width: 60, height: 60, opacity: 0.8,
+          }} />
+          <img src={bubbleImg} alt="" crossOrigin="anonymous" style={{
+            position: 'absolute', top: 6, right: -100, width: 30, height: 30, opacity: 0.8,
+          }} />
+        </div>
+        
+        <p style={{
+          fontSize: 28, lineHeight: 2, color: '#2D2B6B',
+          margin: 0,
+          fontFamily: 'Georgia, serif',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'keep-all',
+        }}>
+          {content}
+        </p>
+
+        {isExcerpted && (
+          <p style={{
+            fontSize: 18, fontStyle: 'italic',
+            color: 'rgba(45,43,107,0.5)',
+            margin: '32px 0 0',
+          }}>
+            전문은 메일에 도착했어요
+          </p>
+        )}
+      </div>
+
+      {/* 하단 워터마크 */}
+      <div style={{ textAlign: 'center' }}>
+        <p style={{
+          fontSize: 18, fontStyle: 'italic',
+          color: 'rgba(45,43,107,0.4)',
+          margin: 0,
+          letterSpacing: '.05em',
+        }}>
+          — 미래의 나에게서
+        </p>
       </div>
     </div>
   );
@@ -225,6 +352,7 @@ export default function LetterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [showCaptureCard, setShowCaptureCard] = useState(false);
 
   // 토스트 자동 숨김
   useEffect(() => {
@@ -246,7 +374,7 @@ export default function LetterPage() {
           .from('letters')
           .select('*')
           .eq('id', id)
-          .maybeSingle(); // ★ single → maybeSingle: 0개 결과를 에러로 처리하지 않음
+          .maybeSingle();
 
         if (dbError) {
           console.error('[LetterPage] supabase error:', dbError);
@@ -257,7 +385,6 @@ export default function LetterPage() {
           setError('편지를 찾을 수 없어요. 링크가 만료되었거나 잘못된 주소일 수 있어요.');
           return;
         }
-        // 본문이 비어있는 케이스도 방어
         if (!data.content || !data.content.trim()) {
           setError('편지 내용이 비어있어요.');
           return;
@@ -272,10 +399,9 @@ export default function LetterPage() {
   }, [id]);
 
   const openCapsule = async () => {
-    if (!letter) return; // ★ letter 없으면 클릭 무시
+    if (!letter) return;
     setStage('loading');
     if (id && !letter.is_opened) {
-      // 비동기 업데이트는 await 안 걸어도 됨 (UX 빠르게)
       supabase.from('letters').update({ is_opened: true }).eq('id', id).then(() => {});
     }
     setTimeout(() => {
@@ -285,47 +411,39 @@ export default function LetterPage() {
     }, 2000);
   };
 
-  // 이미지 저장
+  // 1080×1080 PNG 저장 (간직하기)
   const handleSave = async () => {
+    if (!letter) return;
     setIsSaving(true);
+    
     try {
       // 폰트 로딩 완료 대기
       if (document.fonts && document.fonts.ready) {
         await document.fonts.ready;
       }
 
+      // 숨겨진 캡처 카드 표시
+      setShowCaptureCard(true);
+      
+      // DOM 렌더링 + 이미지 로드 대기
+      await new Promise(r => setTimeout(r, 200));
+
       const html2canvas = (await import('html2canvas')).default;
-      const el = document.getElementById('letter-card');
+      const el = document.getElementById('share-card-capture');
       if (!el) {
-        setToast('저장할 영역을 찾을 수 없어요.');
+        setToast('저장에 실패했어요.');
         return;
       }
 
-      // 애니메이션 강제 종료
-      const animated = el.querySelectorAll<HTMLElement>('p, h2');
-      animated.forEach(node => {
-        node.style.opacity = '1';
-        node.style.animation = 'none';
-        node.style.transform = 'none';
-      });
-
-      // 버튼 임시 숨김
-      const buttons = el.querySelectorAll<HTMLElement>('button');
-      buttons.forEach(btn => (btn.style.display = 'none'));
-
-      await new Promise(r => setTimeout(r, 80));
-
       const canvas = await html2canvas(el, {
-        scale: 2,
+        width: 1080,
+        height: 1080,
+        scale: 2, // 더 선명하게
         useCORS: true,
         backgroundColor: '#E2E7F7',
         logging: false,
       });
 
-      // 버튼 복원
-      buttons.forEach(btn => (btn.style.display = ''));
-
-      // 다운로드
       canvas.toBlob((blob) => {
         if (!blob) {
           setToast('이미지 생성에 실패했어요.');
@@ -339,12 +457,14 @@ export default function LetterPage() {
         link.click();
         document.body.removeChild(link);
         setTimeout(() => URL.revokeObjectURL(url), 1000);
-        setToast('이미지가 저장되었어요 ✨');
+        setToast('편지를 간직했어요 🤍');
       }, 'image/png');
+      
     } catch (e) {
       console.error('[LetterPage] save error:', e);
       setToast('저장 중 오류가 발생했어요.');
     } finally {
+      setShowCaptureCard(false);
       setIsSaving(false);
     }
   };
@@ -354,23 +474,20 @@ export default function LetterPage() {
     const shareUrl = window.location.href;
     const shareData = {
       title: '퓨쳐타임캡슐',
-      text: '미래의 나에게서 편지가 도착했어요 💌',
+      text: '미래의 나에게서 편지가 도착했어요',
       url: shareUrl,
     };
 
     try {
-      // 1순위: Web Share API (모바일 네이티브 공유시트)
       if (navigator.share && !isInToss()) {
         await navigator.share(shareData);
         return;
       }
-      // 2순위: 클립보드 복사
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareUrl);
-        setToast('링크가 복사되었어요 📋');
+        setToast('링크가 복사되었어요');
         return;
       }
-      // 3순위: 폴백 (구형 브라우저)
       const textarea = document.createElement('textarea');
       textarea.value = shareUrl;
       textarea.style.position = 'fixed';
@@ -379,14 +496,16 @@ export default function LetterPage() {
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      setToast('링크가 복사되었어요 📋');
+      setToast('링크가 복사되었어요');
     } catch (e: any) {
-      // 사용자가 공유 취소한 건 에러 아님
       if (e?.name === 'AbortError') return;
       console.error('[LetterPage] share error:', e);
       setToast('공유에 실패했어요.');
     }
   };
+
+  // 발췌 텍스트 (저장용)
+  const excerpt = letter ? getExcerpt(letter.content, 150) : { text: '', isExcerpted: false };
 
   // ─── 렌더링 ───
   if (error) {
@@ -506,6 +625,16 @@ export default function LetterPage() {
           }}>
             {toast}
           </div>
+        )}
+
+        {/* 1080×1080 PNG 저장용 숨김 카드 */}
+        {showCaptureCard && letter && (
+          <ShareCardForCapture
+            content={excerpt.text}
+            date={letter.created_at ? formatDate(letter.created_at) : ''}
+            letterColor={letter.letter_color}
+            isExcerpted={excerpt.isExcerpted}
+          />
         )}
       </div>
 
